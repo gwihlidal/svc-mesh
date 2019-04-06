@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 meshopt = "0.1.6"
+serde_json = "1.0.9"
 
 [dependencies.gltf]
 version = "0.11.3"
