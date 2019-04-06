@@ -1,0 +1,11 @@
+[package]
+name = "svc-mesh"
+version = "0.1.0"
+authors = ["Graham Wihlidal <graham@wihlidal.ca>"]
+edition = "2018"
+
+[dependencies]
+
+[dependencies.gltf]
+version = "0.11.3"
+features = ["import", "utils", "extras", "names"]
