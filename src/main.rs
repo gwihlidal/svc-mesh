@@ -1,6 +1,8 @@
 use gltf::{buffer::Source as BufferSource, image::Source as ImageSource, Gltf};
 use std::boxed::Box;
 use std::error::Error as StdError;
+use std::path::Path;
+use std::rc::Rc;
 use std::{fs, io};
 
 struct VertexSkinningData {}
@@ -22,43 +24,105 @@ struct MeshData {
     indices: Vec<u32>,
 }
 
-fn print_tree(node: &gltf::Node, depth: i32) {
-    for _ in 0..(depth - 1) {
-        print!("  ");
-    }
-    print!(" -");
-    print!(" Node {}", node.index());
-    #[cfg(feature = "names")]
-    print!(" ({})", node.name().unwrap_or("<Unnamed>"));
-    println!();
+/*
+pub struct GltfMaterial {
 
-    for child in node.children() {
-        print_tree(&child, depth + 1);
+}
+
+pub struct GltfPrimitive {
+
+}
+
+impl GltfPrimitive {
+    pub fn new(
+        //bounds: Aabb3,
+        //vertices: &[Vertex],
+        //indices: Option<Vec<u32>>,
+        material: Rc<GltfMaterial>,
+        //shader: Rc<PbrShader>,
+    ) -> GltfPrimitive {
+        GltfPrimitive {}
     }
 }
 
-fn list(path: &str) -> Result<(), Box<StdError>> {
-    let file = fs::File::open(&path)?;
-    let reader = io::BufReader::new(file);
-    let gltf = Gltf::from_reader(reader)?;
-    for scene in gltf.scenes() {
-        print!("Scene {}", scene.index());
-        #[cfg(feature = "names")]
-        print!(" ({})", scene.name().unwrap_or("<Unnamed>"));
-        println!();
-        for node in scene.nodes() {
-            print_tree(&node, 1);
-        }
-    }
-    Ok(())
+
+pub struct GltfMesh {
+    pub index: usize, // glTF index
+    pub primitives: Vec<GltfPrimitive>,
+    pub name: Option<String>,
 }
 
-fn display(path: &str) -> Result<(), Box<StdError>> {
-    let file = fs::File::open(&path)?;
-    let reader = io::BufReader::new(file);
-    let gltf = Gltf::from_reader(reader)?;
-    println!("{:#?}", gltf);
-    Ok(())
+impl GltfMesh {
+    pub fn from_gltf(
+        mesh_ref: &gltf::Mesh<'_>,
+        model: &mut GltfModel,
+        data: &GltfData,
+        base_path: &Path,
+    ) -> GltfMesh {
+        let primitives: Vec<GltfPrimitive> = mesh_ref.primitives()
+            .enumerate()
+            .map(|(i, prim_ref)| {
+                GltfPrimitive::from_gltf(&prim_ref, i, mesh_ref.index(), model, data, base_path)
+            })
+            .collect();
+
+        /*let bounds = primitives.iter()
+            .fold(Aabb3::zero(), |bounds, prim| prim.bounds.union(&bounds));*/
+GltfMesh {
+index: mesh_ref.index(),
+primitives,
+name: mesh_ref.name().map(|s| s.into()),
+//bounds,
+}
+}
+}*/
+
+#[derive(Default, Debug)]
+pub struct GltfModel {
+    pub root_nodes: Vec<Rc<GltfNode>>,
+    pub linear_nodes: Vec<Rc<GltfNode>>,
+}
+
+pub struct GltfData {
+    //pub doc: gltf::Document,
+//pub buffers: Vec<gltf::buffer::Data>,
+//pub images: Vec<gltf::image::Data>,
+}
+
+pub type GltfIndex = usize;
+
+#[derive(Default, Debug)]
+pub struct GltfNode {
+    pub index: GltfIndex,
+    pub parent: Option<Rc<GltfNode>>,
+    pub children: Vec<Rc<GltfNode>>,
+    pub name: String,
+    //pub mesh: Option<Rc<GltfMesh>>,
+}
+
+impl GltfNode {
+    pub fn from_gltf(
+        parent: Option<Rc<GltfNode>>,
+        node_ref: &gltf::Node<'_>,
+        model: &mut GltfModel,
+        data: &GltfData,
+        path: &Path,
+    ) -> Rc<GltfNode> {
+        let children: Vec<Rc<GltfNode>> = node_ref
+            .children()
+            .map(|node_ref| GltfNode::from_gltf(parent.clone(), &node_ref, model, &data, path))
+            .collect();
+
+        let node = Rc::new(GltfNode {
+            index: node_ref.index(),
+            parent: parent.clone(),
+            children,
+            name: String::new(), //node_ref.name().map(|s| s.into()),
+        });
+
+        model.linear_nodes.push(node.clone());
+        node
+    }
 }
 
 fn load_model(path: &str) -> Result<(), Box<StdError>> {
@@ -262,9 +326,23 @@ fn load_model(path: &str) -> Result<(), Box<StdError>> {
         println!("Material - Name: {}, Url: {}", material_name, material_url);
     }
 
-    for scene in gltf.scenes() {
-        for node in scene.nodes() {}
+    if let Some(ref scene) = gltf.default_scene() {
+        let mut data = GltfData {};
+        let mut model = GltfModel::default();
+        let nodes: Vec<Rc<GltfNode>> = scene
+            .nodes()
+            .map(|node_ref| {
+                GltfNode::from_gltf(None, &node_ref, &mut model, &data, Path::new(path))
+            })
+            .collect();
+        model.root_nodes = nodes;
+        println!("Mode: {:?}", model);
+        println!("Root Nodes: {}", model.root_nodes.len());
+        println!("Linear Nodes: {}", model.root_nodes.len());
     }
+    /*for scene in gltf.scenes() {
+        for node in scene.nodes() {}
+    }*/
 
     if gltf.animations().len() > 0 {
         //load_animations();
