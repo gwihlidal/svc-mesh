@@ -4,6 +4,7 @@ use std::error::Error as StdError;
 use std::path::Path;
 
 mod animation;
+mod data;
 mod material;
 mod math;
 mod mesh;
@@ -14,6 +15,7 @@ mod scene;
 mod texture;
 
 use animation::*;
+use data::*;
 use material::*;
 use math::*;
 use mesh::*;
@@ -36,15 +38,6 @@ struct MeshData {
     vertexColors: Vec<Vector4>,
     indices: Vec<u32>,
 }*/
-
-#[derive(Debug)]
-pub struct GltfData {
-    pub document: gltf::Document,
-    pub buffers: Vec<gltf::buffer::Data>,
-    pub images: Vec<gltf::image::Data>,
-}
-
-pub type GltfIndex = usize;
 
 fn load_model(path: &Path) -> Result<(), Box<StdError>> {
     let (document, buffers, images) = match gltf::import(path) {

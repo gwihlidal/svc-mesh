@@ -13,6 +13,8 @@ num-traits = "0.2.6"
 mikktspace = "0.1.1"
 nalgebra = "0.9.0"
 log = "0.4.6"
+image = "0.9.1"
+base64 = "0.9.3"
 
 [dependencies.gltf]
 version = "0.11.3"
