@@ -5,6 +5,7 @@ use std::path::Path;
 
 mod animation;
 mod data;
+mod format;
 mod material;
 mod math;
 mod mesh;
@@ -16,6 +17,7 @@ mod texture;
 
 //use animation::*;
 use data::*;
+use format::*;
 use material::*;
 use math::*;
 use mesh::*;

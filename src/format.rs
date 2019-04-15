@@ -1,3 +1,7 @@
+use crate::Vector2;
+use crate::Vector3;
+use crate::Vector4;
+
 #[derive(Debug)]
 pub enum AlphaMode {
     Opaque,
@@ -5,8 +9,12 @@ pub enum AlphaMode {
     Blend,
 }
 
-pub struct SkinningData {
+pub const MAX_BONE_INFLUENCES: usize = 16;
 
+pub struct SkinningData {
+    pub bone_count: u32,
+    pub weights: [f32; MAX_BONE_INFLUENCES],
+    pub bone_ids: [u32; MAX_BONE_INFLUENCES],
 }
 
 pub struct MeshData {
