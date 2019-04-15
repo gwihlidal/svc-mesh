@@ -61,7 +61,7 @@ pub struct GltfPrimitive {
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u32>,
     //pub dimensions: Dimensions,
-/*
+    /*
     struct Dimensions
     {
         glm::vec3 min = glm::vec3(FLT_MAX);

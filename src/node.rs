@@ -114,9 +114,9 @@ impl GltfNode {
     pub fn compute_dimensions(&self, model: &GltfModel, min: &mut Vector3, max: &mut Vector3) {
         if let Some(ref mesh) = self.mesh {
             for primitive in &mesh.primitives {
-             /*   let bounds = primitives
-            .iter()
-            .fold(Aabb3::zero(), |bounds, prim| prim.bounds.union(&bounds));*/
+                /*   let bounds = primitives
+                .iter()
+                .fold(Aabb3::zero(), |bounds, prim| prim.bounds.union(&bounds));*/
             }
         }
 
@@ -126,7 +126,7 @@ impl GltfNode {
             child_node.compute_dimensions(model, min, max);
         }
 
-/*
+        /*
         if (node->mesh)
         {
             for (GltfPrimitive* primitive : node->mesh->primitives)
