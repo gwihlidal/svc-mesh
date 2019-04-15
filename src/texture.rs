@@ -1,7 +1,7 @@
 use crate::GltfData;
 use crate::GltfIndex;
-use crate::Vector3;
-use crate::Vector4;
+//use crate::Vector3;
+//use crate::Vector4;
 use std::path::Path;
 
 #[derive(Debug)]

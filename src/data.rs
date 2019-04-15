@@ -175,7 +175,7 @@ fn import_binary(
     Ok((gltf, buffers))
 }
 
-pub fn import<P>(data: &[u8], path: P) -> Result<(gltf::Gltf, GltfBuffers), Box<StdError>>
+pub fn _import<P>(data: &[u8], path: P) -> Result<(gltf::Gltf, GltfBuffers), Box<StdError>>
 where
     P: AsRef<Path>,
 {

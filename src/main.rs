@@ -14,7 +14,7 @@ mod primitive;
 mod scene;
 mod texture;
 
-use animation::*;
+//use animation::*;
 use data::*;
 use material::*;
 use math::*;

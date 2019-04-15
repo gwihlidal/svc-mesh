@@ -40,14 +40,14 @@ pub fn load_skin(
         })
         .collect::<Vec<_>>();
 
-    let reader = skin.reader(|buffer| buffers.buffer(&buffer));
+    let _reader = skin.reader(|buffer| buffers.buffer(&buffer));
 
     /*let inverse_bind_matrices = reader
     .read_inverse_bind_matrices()
     .map(|matrices| matrices.map(|m| m.into()).collect())
     .unwrap_or(vec![Matrix4::identity().into(); joints.len()]);*/
 
-    for (_bind_index, joint_index) in joints.iter().enumerate() {
+    for (_bind_index, _joint_index) in joints.iter().enumerate() {
         /*prefab
         .data_or_default(*joint_index)
         .skinnable

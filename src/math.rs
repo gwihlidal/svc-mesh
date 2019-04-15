@@ -5,7 +5,7 @@ pub use cgmath::prelude::*;
 pub use cgmath::{vec3, vec4};
 
 use collision;
-use num_traits::clamp;
+//use num_traits::clamp;
 
 pub type Vector2 = cgmath::Vector2<f32>;
 pub type Vector3 = cgmath::Vector3<f32>;
