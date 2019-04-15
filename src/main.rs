@@ -39,8 +39,13 @@ struct MeshData {
     indices: Vec<u32>,
 }*/
 
-fn load_model(path: &Path) -> Result<(), Box<StdError>> {
-    let (document, buffers, images) = match gltf::import(path) {
+fn load_model(model_path: &Path) -> Result<(), Box<StdError>> {
+    let base_path = model_path.parent().unwrap_or(Path::new("./"));
+    //let gltf_data = read_to_end(model_path)?;
+    //let (gltf, gltf_buffers) = import(&gltf_data, base_path)?;
+    //println!("gltf: {:?}", gltf);
+
+    let (document, buffers, images) = match gltf::import(model_path) {
         Ok(tuple) => tuple,
         Err(err) => {
             //error!("glTF import failed: {:?}", err);
@@ -58,19 +63,21 @@ fn load_model(path: &Path) -> Result<(), Box<StdError>> {
         images,
     };
 
-    let mut model = GltfModel::from_gltf(&data, path);
+    let mut model = GltfModel::from_gltf(&data, model_path);
 
+    let scene_count = data.document.scenes().len();
     let scene_index = 0;
-    if scene_index >= data.document.scenes().len() {
-        //error!("Scene index too high - file has only {} scene(s)", imp.doc.scenes().len());
+    if scene_index >= scene_count {
+        //error!("Scene index too high - file has only {} scene(s)", scene_count);
         //process::exit(3)
         panic!("scene index is too high");
     }
+    println!("Scene count: {}", scene_count);
 
-    let scene = GltfScene::from_gltf(
-        &data.document.scenes().nth(scene_index).unwrap(),
-        &mut model,
-    );
+    let gltf_scene = data.document.scenes().nth(scene_index).unwrap();
+    let scene = GltfScene::from_gltf(&gltf_scene, &mut model);
+
+    //println!("Scene: {:?} - {:?}", scene, gltf_scene);
 
     /*
     if gltf.animations().len() > 0 {
@@ -108,7 +115,12 @@ fn main() {
 
     //display(&"data/RiggedFigure.glb").expect("runtime error");
 
+    println!("Model 1");
     load_model(&Path::new("data/Floor_Junk_Cluster_01.glb")).expect("runtime error");
     //load_model(&"data/Combat_Helmet.glb").expect("runtime error");
-    load_model(&Path::new("data/SciFiHelmet.gltf")).expect("runtime error");
+    println!("Model 2");
+    //load_model(&Path::new("data/SciFiHelmet.gltf")).expect("runtime error");
+    //load_model(&Path::new("data/EpicCitadel.glb")).expect("runtime error");
+    load_model(&Path::new("data/BoxAnimated.glb")).expect("runtime error");
+    println!("Done");
 }

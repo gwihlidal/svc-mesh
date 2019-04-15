@@ -1,5 +1,6 @@
 use crate::StdError;
 use std::path::Path;
+use std::{fs, io};
 
 #[derive(Debug)]
 pub struct GltfData {
@@ -9,6 +10,19 @@ pub struct GltfData {
 }
 
 pub type GltfIndex = usize;
+
+pub fn read_to_end<P>(path: P) -> Result<Vec<u8>, Box<StdError>>
+where
+    P: AsRef<Path>,
+{
+    use io::Read;
+    let file = fs::File::open(path.as_ref())?;
+    let length = file.metadata().map(|x| x.len()).unwrap_or(0);
+    let mut reader = io::BufReader::new(file);
+    let mut data = Vec::with_capacity(length as usize);
+    reader.read_to_end(&mut data)?;
+    Ok(data)
+}
 
 #[derive(Debug)]
 pub enum ImageFormat {

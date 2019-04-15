@@ -12,10 +12,16 @@ pub struct Vertex {
     pub normal: Vector3,
     pub tangent: Vector4,
     pub tex_coord_0: Vector2,
-    pub tex_coord_1: Vector2,
     pub color_0: Vector4,
+
     pub joints_0: [u16; 4],
+    pub joints_1: [u16; 4],
+    pub joints_2: [u16; 4],
+    pub joints_3: [u16; 4],
     pub weights_0: Vector4,
+    pub weights_1: Vector4,
+    pub weights_2: Vector4,
+    pub weights_3: Vector4,
 }
 
 impl Default for Vertex {
@@ -25,10 +31,15 @@ impl Default for Vertex {
             normal: Vector3::zero(),
             tangent: Vector4::zero(),
             tex_coord_0: Vector2::zero(),
-            tex_coord_1: Vector2::zero(),
             color_0: Vector4::zero(),
             joints_0: [0; 4],
+            joints_1: [0; 4],
+            joints_2: [0; 4],
+            joints_3: [0; 4],
             weights_0: Vector4::zero(),
+            weights_1: Vector4::zero(),
+            weights_2: Vector4::zero(),
+            weights_3: Vector4::zero(),
         }
     }
 }
@@ -39,7 +50,7 @@ pub struct GltfPrimitive {
     pub bounds: Aabb3,
     pub material: Rc<GltfMaterial>,
     pub vertices: Vec<Vertex>,
-    pub index_count: u32,
+    pub indices: Vec<u32>,
 }
 
 impl GltfPrimitive {
@@ -51,12 +62,17 @@ impl GltfPrimitive {
         material: Rc<GltfMaterial>,
     ) -> GltfPrimitive {
         let index_count = indices.as_ref().map(|i| i.len()).unwrap_or(0);
+        let indices = if let Some(ref indices) = indices {
+            indices.to_owned()
+        } else {
+            Vec::new()
+        };
         GltfPrimitive {
             mode,
             bounds,
             material,
             vertices: vertices.to_vec(),
-            index_count: index_count as u32,
+            indices,
         }
     }
 
@@ -125,26 +141,15 @@ impl GltfPrimitive {
         }
 
         // texture coordinates
-        let mut tex_coord_set = 0;
-        while let Some(tex_coords) = reader.read_tex_coords(tex_coord_set) {
-            if tex_coord_set > 1 {
-                warn!(
-                    "Ignoring texture coordinate set {}, \
-                     only supporting 2 sets at the moment. (mesh: {}, primitive: {})",
-                    tex_coord_set, mesh_index, primitive_index
-                );
-                tex_coord_set += 1;
-                continue;
-            }
+        if let Some(tex_coords) = reader.read_tex_coords(0) {
             for (i, tex_coord) in tex_coords.into_f32().enumerate() {
-                match tex_coord_set {
-                    0 => vertices[i].tex_coord_0 = Vector2::from(tex_coord),
-                    1 => vertices[i].tex_coord_1 = Vector2::from(tex_coord),
-                    _ => unreachable!(),
-                }
+                vertices[i].tex_coord_0 = Vector2::from(tex_coord);
             }
             //shader_flags |= ShaderFlags::HAS_UV;
-            tex_coord_set += 1;
+        }
+        if reader.read_tex_coords(1).is_some() {
+            warn!("Ignoring further tex coord attributes, only supporting TEXCOORD_0. (mesh: {}, primitive: {})",
+                mesh_index, primitive_index);
         }
 
         // colors
@@ -160,24 +165,52 @@ impl GltfPrimitive {
                 mesh_index, primitive_index);
         }
 
-        if let Some(joints) = reader.read_joints(0) {
-            for (i, joint) in joints.into_u16().enumerate() {
-                vertices[i].joints_0 = joint;
+        let mut joint_set = 0;
+        while let Some(joints) = reader.read_joints(joint_set) {
+            if joint_set > 3 {
+                warn!(
+                    "Ignoring joint set {}, \
+                     only supporting 4 joints at the moment. (mesh: {}, primitive: {})",
+                    joint_set, mesh_index, primitive_index
+                );
+                joint_set += 1;
+                continue;
             }
-        }
-        if reader.read_joints(1).is_some() {
-            warn!("Ignoring further joint attributes, only supporting JOINTS_0. (mesh: {}, primitive: {})",
-                mesh_index, primitive_index);
+            for (i, joint) in joints.into_u16().enumerate() {
+                match joint_set {
+                    0 => vertices[i].joints_0 = joint,
+                    1 => vertices[i].joints_1 = joint,
+                    2 => vertices[i].joints_2 = joint,
+                    3 => vertices[i].joints_3 = joint,
+                    _ => unreachable!(),
+                }
+            }
+            //shader_flags |= ShaderFlags::HAS_UV;
+            joint_set += 1;
         }
 
-        if let Some(weights) = reader.read_weights(0) {
-            for (i, weights) in weights.into_f32().enumerate() {
-                vertices[i].weights_0 = weights.into();
+        let mut weight_set = 0;
+        while let Some(weights) = reader.read_weights(weight_set) {
+            if weight_set > 3 {
+                warn!(
+                    "Ignoring weight set {}, \
+                     only supporting 4 weights at the moment. (mesh: {}, primitive: {})",
+                    weight_set, mesh_index, primitive_index
+                );
+                weight_set += 1;
+                continue;
             }
-        }
-        if reader.read_weights(1).is_some() {
-            warn!("Ignoring further weight attributes, only supporting WEIGHTS_0. (mesh: {}, primitive: {})",
-                mesh_index, primitive_index);
+            for (i, weights) in weights.into_f32().enumerate() {
+                match weight_set {
+                    0 => vertices[i].weights_0 = weights.into(),
+                    1 => vertices[i].weights_1 = weights.into(),
+                    2 => vertices[i].weights_2 = weights.into(),
+                    3 => vertices[i].weights_3 = weights.into(),
+                    _ => unreachable!(),
+                }
+            }
+            //shader_flags |= ShaderFlags::HAS_UV;
+            weight_set += 1;
         }
 
         let indices = reader
