@@ -2,6 +2,7 @@ use crate::GltfData;
 use crate::GltfMaterial;
 use crate::GltfMesh;
 use crate::GltfNode;
+use crate::GltfTexture;
 use std::path::Path;
 use std::rc::Rc;
 
@@ -10,7 +11,7 @@ pub struct GltfModel {
     pub nodes: Vec<Rc<GltfNode>>,
 
     pub meshes: Vec<Rc<GltfMesh>>,
-    //pub textures: Vec<Rc<GltfTexture>>,
+    pub textures: Vec<Rc<GltfTexture>>,
     pub materials: Vec<Rc<GltfMaterial>>,
 }
 

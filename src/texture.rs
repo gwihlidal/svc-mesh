@@ -1,8 +1,10 @@
 use crate::GltfData;
 use crate::GltfIndex;
+use crate::GltfModel;
 //use crate::Vector3;
 //use crate::Vector4;
 use std::path::Path;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct GltfTexture {
@@ -28,4 +30,29 @@ impl GltfTexture {
             tex_coord,
         }
     }
+}
+
+pub fn load_texture(
+    texture_ref: &gltf::texture::Texture<'_>,
+    tex_coord: u32,
+    model: &mut GltfModel,
+    data: &GltfData,
+    base_path: &Path,
+) -> Rc<GltfTexture> {
+    if let Some(tex) = model
+        .textures
+        .iter()
+        .find(|tex| (***tex).index == texture_ref.index())
+    {
+        return Rc::clone(tex);
+    }
+
+    let texture = Rc::new(GltfTexture::from_gltf(
+        texture_ref,
+        tex_coord,
+        data,
+        base_path,
+    ));
+    model.textures.push(Rc::clone(&texture));
+    texture
 }
