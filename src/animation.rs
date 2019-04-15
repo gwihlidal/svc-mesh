@@ -1,8 +1,11 @@
+#![allow(unused_variables)]
+#![allow(dead_code)]
+
 use crate::GltfBuffers;
 use crate::GltfIndex;
 use crate::Matrix4;
 use crate::StdError;
-use cgmath::SquareMatrix;
+//use cgmath::SquareMatrix;
 use std::collections::HashMap;
 
 pub enum GltfInterpolationType {

@@ -18,7 +18,7 @@ impl GltfTexture {
         texture_ref: &gltf::Texture<'_>,
         tex_coord: u32,
         data: &GltfData,
-        path: &Path,
+        _path: &Path,
     ) -> GltfTexture {
         let _buffers = &data.buffers;
         let _image_ref = texture_ref.source();

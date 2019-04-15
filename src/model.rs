@@ -1,7 +1,7 @@
-use super::GltfData;
-use super::GltfMaterial;
-use super::GltfMesh;
-use super::GltfNode;
+use crate::GltfData;
+use crate::GltfMaterial;
+use crate::GltfMesh;
+use crate::GltfNode;
 use std::path::Path;
 use std::rc::Rc;
 

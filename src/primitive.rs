@@ -61,7 +61,7 @@ impl GltfPrimitive {
         indices: Option<Vec<u32>>,
         material: Rc<GltfMaterial>,
     ) -> GltfPrimitive {
-        let index_count = indices.as_ref().map(|i| i.len()).unwrap_or(0);
+        //let index_count = indices.as_ref().map(|i| i.len()).unwrap_or(0);
         let indices = if let Some(ref indices) = indices {
             indices.to_owned()
         } else {

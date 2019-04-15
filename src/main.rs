@@ -40,14 +40,14 @@ struct MeshData {
 }*/
 
 fn load_model(model_path: &Path) -> Result<(), Box<StdError>> {
-    let base_path = model_path.parent().unwrap_or(Path::new("./"));
+    let _base_path = model_path.parent().unwrap_or(Path::new("./"));
     //let gltf_data = read_to_end(model_path)?;
     //let (gltf, gltf_buffers) = import(&gltf_data, base_path)?;
     //println!("gltf: {:?}", gltf);
 
     let (document, buffers, images) = match gltf::import(model_path) {
         Ok(tuple) => tuple,
-        Err(err) => {
+        Err(_err) => {
             //error!("glTF import failed: {:?}", err);
             //if let gltf::Error::Io(_) = err {
             //error!("Hint: Are the .bin file(s) referenced by the .gltf file available?")
@@ -75,7 +75,7 @@ fn load_model(model_path: &Path) -> Result<(), Box<StdError>> {
     println!("Scene count: {}", scene_count);
 
     let gltf_scene = data.document.scenes().nth(scene_index).unwrap();
-    let scene = GltfScene::from_gltf(&gltf_scene, &mut model);
+    let _scene = GltfScene::from_gltf(&gltf_scene, &mut model);
 
     //println!("Scene: {:?} - {:?}", scene, gltf_scene);
 

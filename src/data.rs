@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use crate::StdError;
 use std::path::Path;
 use std::{fs, io};
