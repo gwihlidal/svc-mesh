@@ -45,12 +45,40 @@ impl Default for Vertex {
 }
 
 #[derive(Debug)]
+pub struct Dimensions {
+    pub min: Vector3,
+    pub max: Vector3,
+    pub size: Vector3,
+    pub center: Vector3,
+    pub radius: f32,
+}
+
+#[derive(Debug)]
 pub struct GltfPrimitive {
     pub mode: gltf::mesh::Mode,
     pub bounds: Aabb3,
     pub material: Rc<GltfMaterial>,
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u32>,
+    //pub dimensions: Dimensions,
+/*
+    struct Dimensions
+    {
+        glm::vec3 min = glm::vec3(FLT_MAX);
+        glm::vec3 max = glm::vec3(-FLT_MAX);
+        glm::vec3 size;
+        glm::vec3 center;
+        float32 radius;
+    } dimensions;
+
+    void setDimensions(glm::vec3 min, glm::vec3 max)
+    {
+        dimensions.min = min;
+        dimensions.max = max;
+        dimensions.size = max - min;
+        dimensions.center = (min + max) / 2.0f;
+        dimensions.radius = glm::distance(min, max) / 2.0f;
+    }*/
 }
 
 impl GltfPrimitive {
@@ -102,13 +130,22 @@ impl GltfPrimitive {
             max: bounds.max.into(),
         };
 
+        println!("Bounds: {:?}", bounds);
+
+        //let mut pos_min: Vector3 = Point3::new(f32::FLT_MAX
         let mut vertices: Vec<Vertex> = positions
             .into_iter()
-            .map(|position| Vertex {
-                position: Vector3::from(position),
-                ..Vertex::default()
+            .map(|position| {
+                let v = Vertex {
+                    position: Vector3::from(position),
+                    ..Vertex::default()
+                };
+                //v.position
+                v
             })
             .collect();
+
+        println!("Vertex Count: {}", vertices.len());
 
         //let mut shader_flags = ShaderFlags::empty();
 

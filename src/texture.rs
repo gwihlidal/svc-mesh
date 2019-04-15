@@ -17,22 +17,33 @@ pub struct GltfTexture {
 
 impl GltfTexture {
     pub fn from_gltf(
+        default_name: &str,
         texture_ref: &gltf::Texture<'_>,
         tex_coord: u32,
         data: &GltfData,
-        _path: &Path,
+        _base_path: &Path,
     ) -> GltfTexture {
         let _buffers = &data.buffers;
         let _image_ref = texture_ref.source();
+
+        let texture_name = if let Some(ref name) = texture_ref.name() {
+            Some(name.to_owned().to_string())
+        } else if default_name.is_empty() {
+            None
+        } else {
+            Some(default_name.to_owned())
+        };
+
         GltfTexture {
             index: texture_ref.index(),
-            name: texture_ref.name().map(|s| s.into()),
+            name: texture_name,
             tex_coord,
         }
     }
 }
 
 pub fn load_texture(
+    default_name: &str,
     texture_ref: &gltf::texture::Texture<'_>,
     tex_coord: u32,
     model: &mut GltfModel,
@@ -48,11 +59,13 @@ pub fn load_texture(
     }
 
     let texture = Rc::new(GltfTexture::from_gltf(
+        default_name,
         texture_ref,
         tex_coord,
         data,
         base_path,
     ));
     model.textures.push(Rc::clone(&texture));
+    println!("Texture: {:?}", texture);
     texture
 }

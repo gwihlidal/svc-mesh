@@ -5,6 +5,37 @@ use crate::StdError;
 use std::path::Path;
 use std::{fs, io};
 
+/*
+bitflags! {
+    pub struct MaterialFlags: u16 {
+        // vertex shader + fragment shader
+        const HAS_NORMALS           = 1 << 0;
+        const HAS_TANGENTS          = 1 << 1;
+        const HAS_UV                = 1 << 2;
+        const HAS_COLORS            = 1 << 3;
+
+        // fragment shader only
+        const USE_IBL               = 1 << 4;
+        const HAS_BASECOLORMAP      = 1 << 5;
+        const HAS_NORMALMAP         = 1 << 6;
+        const HAS_EMISSIVEMAP       = 1 << 7;
+        const HAS_METALROUGHNESSMAP = 1 << 8;
+        const HAS_OCCLUSIONMAP      = 1 << 9;
+        const USE_TEX_LOD           = 1 << 10;
+    }
+}
+
+impl MaterialFlags {
+    pub fn as_strings(self) -> Vec<String> {
+        (0..15)
+            .map(|i| 1u16 << i)
+            .filter(|i| self.bits & i != 0)
+            .map(|i| format!("{:?}", MaterialFlags::from_bits_truncate(i)))
+            .collect()
+    }
+}
+*/
+
 #[derive(Debug)]
 pub struct GltfData {
     pub document: gltf::Document,

@@ -25,20 +25,6 @@ use primitive::*;
 use scene::*;
 use texture::*;
 
-/*
-struct VertexSkinningData {}
-
-struct MeshData {
-    bonesAndWeights: Vec<VertexSkinningData>,
-    vertexPositions: Vec<Vector3>,
-    vertexTexCoords: Vec<Vector2>,
-    vertexNormals: Vec<Vector3>,
-    vertexTangents: Vec<Vector3>,
-    vertexBitangents: Vec<Vector3>,
-    vertexColors: Vec<Vector4>,
-    indices: Vec<u32>,
-}*/
-
 fn load_model(model_path: &Path) -> Result<(), Box<StdError>> {
     let _base_path = model_path.parent().unwrap_or(Path::new("./"));
     //let gltf_data = read_to_end(model_path)?;
@@ -119,8 +105,8 @@ fn main() {
     load_model(&Path::new("data/Floor_Junk_Cluster_01.glb")).expect("runtime error");
     //load_model(&"data/Combat_Helmet.glb").expect("runtime error");
     println!("Model 2");
-    //load_model(&Path::new("data/SciFiHelmet.gltf")).expect("runtime error");
+    load_model(&Path::new("data/SciFiHelmet.gltf")).expect("runtime error");
     //load_model(&Path::new("data/EpicCitadel.glb")).expect("runtime error");
-    load_model(&Path::new("data/BoxAnimated.glb")).expect("runtime error");
+    //load_model(&Path::new("data/BoxAnimated.glb")).expect("runtime error");
     println!("Done");
 }

@@ -93,4 +93,54 @@ impl GltfNode {
 
         node
     }
+
+    pub fn local_matrix(&self) -> Matrix4 {
+        let translation = Matrix4::from_translation(self.translation);
+        let rotation: Matrix4 = self.rotation.into();
+        let scale = Matrix4::from_nonuniform_scale(self.scale.x, self.scale.y, self.scale.z);
+        translation * rotation * scale
+    }
+
+    pub fn get_matrix(&self) -> Matrix4 {
+        let mut matrix = self.local_matrix();
+        let mut current_parent = &self.parent;
+        while let Some(ref parent) = current_parent {
+            matrix = parent.local_matrix() * matrix;
+            current_parent = &parent.parent;
+        }
+        matrix
+    }
+
+    pub fn compute_dimensions(&self, model: &GltfModel, min: &mut Vector3, max: &mut Vector3) {
+        if let Some(ref mesh) = self.mesh {
+            for primitive in &mesh.primitives {
+             /*   let bounds = primitives
+            .iter()
+            .fold(Aabb3::zero(), |bounds, prim| prim.bounds.union(&bounds));*/
+            }
+        }
+
+        for i in 0..self.children.len() {
+            let child_index = self.children[i];
+            let child_node = &model.nodes[child_index];
+            child_node.compute_dimensions(model, min, max);
+        }
+
+/*
+        if (node->mesh)
+        {
+            for (GltfPrimitive* primitive : node->mesh->primitives)
+            {
+                glm::vec4 locMin = glm::vec4(primitive->dimensions.min, 1.0f) * node->getMatrix();
+                glm::vec4 locMax = glm::vec4(primitive->dimensions.max, 1.0f) * node->getMatrix();
+                if (locMin.x < min.x) { min.x = locMin.x; }
+                if (locMin.y < min.y) { min.y = locMin.y; }
+                if (locMin.z < min.z) { min.z = locMin.z; }
+                if (locMax.x > max.x) { max.x = locMax.x; }
+                if (locMax.y > max.y) { max.y = locMax.y; }
+                if (locMax.z > max.z) { max.z = locMax.z; }
+            }
+        }
+        */
+    }
 }
