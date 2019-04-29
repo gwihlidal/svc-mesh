@@ -38,11 +38,10 @@ pub struct GltfMaterial {
 impl GltfMaterial {
     pub fn from_gltf(
         material_ref: &gltf::material::Material<'_>,
-        model: &mut GltfModel,
         data: &GltfData,
         path: &Path,
     ) -> GltfMaterial {
-        use crate::texture::load_texture;
+        //use crate::texture::load_texture;
 
         // TODO: Simplify this expansion (too verbose)
         // TODO: Make this generic
@@ -75,7 +74,7 @@ impl GltfMaterial {
         let pbr = material_ref.pbr_metallic_roughness();
 
         let mut material = GltfMaterial {
-            index: material_ref.index(),
+            index: material_ref.index(), // None is returned if it's the default material
             name: material_ref.name().map(|s| s.into()),
             material_uri,
             base_color_factor: pbr.base_color_factor().into(),
@@ -117,7 +116,7 @@ impl GltfMaterial {
             }
         }*/
 
-        if let Some(color_info) = pbr.base_color_texture() {
+        /*if let Some(color_info) = pbr.base_color_texture() {
             material.base_color_texture = Some(load_texture(
                 &"BaseColor",
                 &color_info.texture(),
@@ -168,7 +167,7 @@ impl GltfMaterial {
                 data,
                 path,
             ));
-        }
+        }*/
 
         material
     }

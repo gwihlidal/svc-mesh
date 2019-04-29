@@ -1,5 +1,6 @@
 use super::math::*;
 use super::GltfData;
+use super::GltfIndex;
 use super::GltfMaterial;
 use super::GltfModel;
 use log::{debug, warn};
@@ -57,7 +58,7 @@ pub struct Dimensions {
 pub struct GltfPrimitive {
     pub mode: gltf::mesh::Mode,
     pub bounds: Aabb3,
-    pub material: Rc<GltfMaterial>,
+    pub material: Option<GltfIndex>,
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u32>,
     //pub dimensions: Dimensions,
@@ -87,7 +88,7 @@ impl GltfPrimitive {
         bounds: Aabb3,
         vertices: &[Vertex],
         indices: Option<Vec<u32>>,
-        material: Rc<GltfMaterial>,
+        material: Option<GltfIndex>,
     ) -> GltfPrimitive {
         //let index_count = indices.as_ref().map(|i| i.len()).unwrap_or(0);
         let indices = if let Some(ref indices) = indices {
@@ -277,25 +278,14 @@ impl GltfPrimitive {
             }
         }
 
-        let material_ref = primitive_ref.material();
-
-        let mut material = None;
-        if let Some(mat) = model
-            .materials
-            .iter()
-            .find(|m| (***m).index == material_ref.index())
-        {
-            material = Rc::clone(mat).into()
-        }
-
-        if material.is_none() {
-            let mat = Rc::new(GltfMaterial::from_gltf(&material_ref, model, data, path));
-            model.materials.push(Rc::clone(&mat));
-            material = Some(mat);
-        };
-        let material = material.unwrap();
         //shader_flags |= material.shader_flags();
 
-        GltfPrimitive::new(mode, bounds, &vertices, indices, material)
+        GltfPrimitive::new(
+            mode,
+            bounds,
+            &vertices,
+            indices,
+            primitive_ref.material().index(),
+        )
     }
 }

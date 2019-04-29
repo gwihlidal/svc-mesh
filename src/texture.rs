@@ -1,25 +1,24 @@
 use crate::GltfData;
 use crate::GltfIndex;
-use crate::GltfModel;
+//use crate::GltfModel;
 //use crate::Vector3;
 //use crate::Vector4;
 use std::path::Path;
-use std::rc::Rc;
+
+#[derive(Debug)]
+pub struct GltfSampler {}
 
 #[derive(Debug)]
 pub struct GltfTexture {
     pub index: GltfIndex,
     pub name: Option<String>,
-
-    //pub id: u32, // OpenGL id
-    pub tex_coord: u32, // the tex coord set to use
+    pub sampler: GltfSampler,
+    //pub tex_coord: u32, // the tex coord set to use
 }
 
 impl GltfTexture {
     pub fn from_gltf(
-        default_name: &str,
         texture_ref: &gltf::Texture<'_>,
-        tex_coord: u32,
         data: &GltfData,
         _base_path: &Path,
     ) -> GltfTexture {
@@ -28,20 +27,19 @@ impl GltfTexture {
 
         let texture_name = if let Some(ref name) = texture_ref.name() {
             Some(name.to_owned().to_string())
-        } else if default_name.is_empty() {
-            None
         } else {
-            Some(default_name.to_owned())
+            None
         };
 
         GltfTexture {
             index: texture_ref.index(),
             name: texture_name,
-            tex_coord,
+            sampler: GltfSampler {},
         }
     }
 }
 
+/*
 pub fn load_texture(
     default_name: &str,
     texture_ref: &gltf::texture::Texture<'_>,
@@ -69,3 +67,4 @@ pub fn load_texture(
     println!("Texture: {:?}", texture);
     texture
 }
+*/
