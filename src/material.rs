@@ -45,7 +45,7 @@ impl GltfMaterial {
 
         // TODO: Simplify this expansion (too verbose)
         // TODO: Make this generic
-        let material_uri = if let Some(extras) = material_ref.extras() {
+        let material_uri = if let Some(ref extras) = material_ref.extras() {
             let mut material_uri = String::new();
             let from_fbx = &extras["fromFBX"];
             if from_fbx.is_object() {

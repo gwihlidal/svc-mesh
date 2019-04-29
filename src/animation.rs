@@ -21,7 +21,7 @@ pub enum GltfInterpolationType {
 #[derive(Debug)]
 pub struct GltfJointNode {
     pub node_index: GltfIndex,
-    pub global_index: i32, // -1
+    pub global_index: Option<GltfIndex>,
 }
 
 #[derive(Debug)]
@@ -36,7 +36,7 @@ pub struct GltfSkin {
 impl GltfSkin {
     pub fn from_gltf(
         skin_ref: &gltf::Skin<'_>,
-        _data: &GltfData,
+        data: &GltfData,
         _base_path: &Path,
     ) -> Rc<GltfSkin> {
         let name = if let Some(ref name) = skin_ref.name() {
@@ -51,12 +51,56 @@ impl GltfSkin {
             None
         };
 
+        // Find joint nodes
+        let joints: Vec<_> = skin_ref
+            .joints()
+            .map(|joint_ref| GltfJointNode {
+                node_index: joint_ref.index(),
+                global_index: None,
+            })
+            .collect();
+
+        //let reader = skin_ref.reader(|buffer| data.buffers(&buffer));
+
+        // Get inverse bind matrices from buffer
+        let inv_bind_matrices = if let Some(accessor) = skin_ref.inverse_bind_matrices() {
+            assert_eq!(accessor.count(), joints.len());
+            match (accessor.data_type(), accessor.dimensions()) {
+                //Mat4,
+                (gltf::accessor::DataType::F32, gltf::accessor::Dimensions::Mat4) => {
+                    let buffer_view = accessor.view();
+                    let buffer_index = buffer_view.buffer().index();
+                    let buffer_offset = accessor.offset() + buffer_view.offset();
+                    let buffer_data = data.buffers[buffer_index].0.as_slice();
+                    let buffer_data = &buffer_data[buffer_offset..(buffer_offset + 4)];
+
+                    let iter = gltf::accessor::Iter::<[f32; 3]>::new(accessor, buffer_data);
+                    for item in iter {
+                        println!("{:?}", item);
+                    }
+                }
+                _ => {
+                    println!(
+                        "Invalid format for inv bind matrices! data type: {:?}, dimensions: {:?}",
+                        accessor.data_type(),
+                        accessor.dimensions()
+                    );
+                    unimplemented!();
+                }
+            }
+
+            Vec::new()
+        } else {
+            Vec::new()
+            //vec![Matrix4::identity().into(); joints.len()]
+        };
+
         Rc::new(GltfSkin {
             skin_index: skin_ref.index(),
             name,
             skeleton_root,
-            inv_bind_matrices: Vec::new(),
-            joints: Vec::new(),
+            inv_bind_matrices,
+            joints,
         })
     }
 }
