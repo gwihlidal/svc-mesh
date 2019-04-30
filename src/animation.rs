@@ -231,6 +231,7 @@ impl GltfAnimation {
             .collect();
 
         let node_to_channel = HashMap::new();
+        // TODO:
 
         Rc::new(GltfAnimation {
             index: animation_ref.index(),

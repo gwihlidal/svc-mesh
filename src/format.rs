@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::Vector2;
 use crate::Vector3;
 use crate::Vector4;

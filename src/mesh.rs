@@ -3,7 +3,7 @@ use super::GltfModel;
 use crate::math::*;
 use crate::GltfIndex;
 use crate::GltfPrimitive;
-use collision::{Aabb, Union};
+//use collision::{Aabb, Union};
 use std::path::Path;
 use std::rc::Rc;
 

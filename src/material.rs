@@ -38,8 +38,8 @@ pub struct GltfMaterial {
 impl GltfMaterial {
     pub fn from_gltf(
         material_ref: &gltf::material::Material<'_>,
-        data: &GltfData,
-        path: &Path,
+        _data: &GltfData,
+        _path: &Path,
     ) -> GltfMaterial {
         //use crate::texture::load_texture;
 
@@ -73,7 +73,7 @@ impl GltfMaterial {
 
         let pbr = material_ref.pbr_metallic_roughness();
 
-        let mut material = GltfMaterial {
+        let material = GltfMaterial {
             index: material_ref.index(), // None is returned if it's the default material
             name: material_ref.name().map(|s| s.into()),
             material_uri,

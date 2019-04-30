@@ -3,9 +3,9 @@ use super::GltfIndex;
 use super::GltfMesh;
 use super::GltfModel;
 use crate::{Matrix4, Quaternion, UnitQuaternion, Vector3, Vector4};
+use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
-use std::cell::RefCell;
 
 #[derive(Debug)]
 pub struct GltfNode {
@@ -38,7 +38,7 @@ impl GltfNode {
         let (trans, rot, scale) = node_ref.transform().decomposed();
         let r = rot;
         let rotation = Quaternion::new(r[0], r[1], r[2], r[3]);
-        //let rotation = UnitQuaternion::new(r[3], r[0], r[1], r[2]); // NOTE: different element order!
+        //let rotation = Quaternion::new(r[3], r[0], r[1], r[2]); // NOTE: different element order!
         let rotation = UnitQuaternion::from_quaternion(rotation);
 
         let mut mesh = None;
@@ -57,7 +57,7 @@ impl GltfNode {
             }
         }
 
-        let mut node = Rc::new(RefCell::new(GltfNode {
+        let node = Rc::new(RefCell::new(GltfNode {
             node_index: node_ref.index(),
             joint_index: None,
             parent: parent.clone(),
@@ -90,14 +90,9 @@ impl GltfNode {
         let children: Vec<GltfNodeRef> = node_ref
             .children()
             .map(|ref node_ref| {
-                GltfNode::from_gltf(
-                    Some(node.clone()),
-                    node_ref,
-                    model,
-                    data,
-                    base_path,
-                )
-            }).collect();
+                GltfNode::from_gltf(Some(node.clone()), node_ref, model, data, base_path)
+            })
+            .collect();
 
         node.borrow_mut().children = children;
 
@@ -113,28 +108,37 @@ impl GltfNode {
     }
 
     pub fn get_matrix(&self) -> Matrix4 {
-        let mut matrix = self.local_matrix();
-        let mut current_parent = &self.parent;
-        println!("HERE");
-        while let Some(ref parent) = current_parent {
-            let parent = parent.borrow();
-            matrix = parent.local_matrix() * matrix;
-            println!("GW: {:?}", matrix);
-            current_parent = &parent.parent;
+        let local_matrix = self.local_matrix();
+        let chained_matrix = self.get_matrix_chain(self.parent.clone(), &local_matrix);
+        println!("GW: {:?}", chained_matrix);
+        chained_matrix
+    }
+
+    fn get_matrix_chain(
+        &self,
+        parent_ref: Option<GltfNodeRef>,
+        current_matrix: &Matrix4,
+    ) -> Matrix4 {
+        if let Some(parent) = parent_ref {
+            let matrix = parent.borrow().local_matrix() * current_matrix;
+            let next_parent = parent.borrow().parent.clone();
+            self.get_matrix_chain(next_parent, &matrix)
+        } else {
+            current_matrix.clone()
         }
-        matrix
     }
 
     pub fn compute_dimensions(&self, model: &GltfModel, min: &mut Vector3, max: &mut Vector3) {
         if let Some(ref mesh) = self.mesh {
             for primitive in &mesh.primitives {
-               // let loc_min = Vector4::new(primitive.dimensions.min.x, primitive.dimensions.min.y, primitive.dimensions.min.z, 1.0);
+                // let loc_min = Vector4::new(primitive.dimensions.min.x, primitive.dimensions.min.y, primitive.dimensions.min.z, 1.0);
                 //let loc_max = Vector4::new(primitive.dimensions.max.x, primitive.dimensions.max.y, primitive.dimensions.max.z, 1.0);
 
                 let node_matrix = self.get_matrix();
+                //println!("Node Matrix: {:?}", node_matrix);
                 let loc_min = node_matrix.transform_vector(&primitive.dimensions.min);
                 let loc_max = node_matrix.transform_vector(&primitive.dimensions.max);
-                
+
                 min.x = min.x.min(loc_min.x);
                 min.y = min.y.min(loc_min.y);
                 min.z = min.z.min(loc_min.z);

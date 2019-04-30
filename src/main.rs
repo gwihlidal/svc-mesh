@@ -29,7 +29,7 @@ use scene::*;
 use texture::*;
 
 fn load_model(model_path: &Path) -> Result<(), Box<StdError>> {
-    let base_path = model_path.parent().unwrap_or(Path::new("./"));
+    let _base_path = model_path.parent().unwrap_or(Path::new("./"));
     //let gltf_data = read_to_end(model_path)?;
     //let (gltf, gltf_buffers) = import(&gltf_data, base_path)?;
     //println!("gltf: {:?}", gltf);

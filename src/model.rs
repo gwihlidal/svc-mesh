@@ -1,18 +1,19 @@
+use crate::Dimensions;
 use crate::GltfAnimation;
 use crate::GltfData;
 use crate::GltfMaterial;
 use crate::GltfMesh;
 use crate::GltfNode;
+use crate::GltfNodeRef;
 use crate::GltfSkin;
 use crate::GltfTexture;
-use crate::Dimensions;
 use crate::Vector3;
 use std::path::Path;
 use std::rc::Rc;
 
 #[derive(Default, Debug)]
 pub struct GltfModel {
-    pub nodes: Vec<Rc<GltfNode>>,
+    pub nodes: Vec<GltfNodeRef>,
 
     pub meshes: Vec<Rc<GltfMesh>>,
     pub textures: Vec<Rc<GltfTexture>>,
@@ -79,9 +80,9 @@ impl GltfModel {
         model
     }
 
-    pub fn unsafe_get_node_mut(&mut self, index: usize) -> &'static mut Rc<GltfNode> {
+    /*pub fn unsafe_get_node_mut(&mut self, index: usize) -> &'static mut Rc<GltfNode> {
         unsafe { &mut *(&mut self.nodes[index] as *mut Rc<GltfNode>) }
-    }
+    }*/
 
     fn merge_skins(&mut self) {
         // A gltf model can contain multiple meshes with multiple primitives (or "parts").
@@ -110,7 +111,7 @@ impl GltfModel {
         let mut min = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
         let mut max = Vector3::new(f32::MIN, f32::MIN, f32::MIN);
         for node in &self.nodes {
-            node.compute_dimensions(self, &mut min, &mut max);
+            node.borrow().compute_dimensions(self, &mut min, &mut max);
         }
         self.dimensions = Dimensions::new(min, max);
     }

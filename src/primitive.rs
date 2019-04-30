@@ -28,19 +28,19 @@ pub struct Vertex {
 impl Default for Vertex {
     fn default() -> Self {
         Vertex {
-            position: Vector3::zero(),
-            normal: Vector3::zero(),
-            tangent: Vector4::zero(),
-            tex_coord_0: Vector2::zero(),
-            color_0: Vector4::zero(),
+            position: Vector3::new(0.0, 0.0, 0.0),
+            normal: Vector3::new(0.0, 0.0, 0.0),
+            tangent: Vector4::new(0.0, 0.0, 0.0, 0.0),
+            tex_coord_0: Vector2::new(0.0, 0.0),
+            color_0: Vector4::new(0.0, 0.0, 0.0, 0.0),
             joints_0: [0; 4],
             joints_1: [0; 4],
             joints_2: [0; 4],
             joints_3: [0; 4],
-            weights_0: Vector4::zero(),
-            weights_1: Vector4::zero(),
-            weights_2: Vector4::zero(),
-            weights_3: Vector4::zero(),
+            weights_0: Vector4::new(0.0, 0.0, 0.0, 0.0),
+            weights_1: Vector4::new(0.0, 0.0, 0.0, 0.0),
+            weights_2: Vector4::new(0.0, 0.0, 0.0, 0.0),
+            weights_3: Vector4::new(0.0, 0.0, 0.0, 0.0),
         }
     }
 }
@@ -60,8 +60,8 @@ impl Default for Dimensions {
         Dimensions {
             min: Vector3::new(f32::MAX, f32::MAX, f32::MAX),
             max: Vector3::new(f32::MIN, f32::MIN, f32::MIN),
-            size: Vector3::zero(),
-            center: Vector3::zero(),
+            size: Vector3::new(0.0, 0.0, 0.0),
+            center: Vector3::new(0.0, 0.0, 0.0),
             radius: 0.0,
         }
     }
@@ -116,9 +116,9 @@ impl GltfPrimitive {
         primitive_ref: &gltf::Primitive<'_>,
         primitive_index: usize,
         mesh_index: usize,
-        model: &mut GltfModel,
+        _model: &mut GltfModel,
         data: &GltfData,
-        path: &Path,
+        _path: &Path,
     ) -> GltfPrimitive {
         use std::f32;
 
@@ -152,8 +152,16 @@ impl GltfPrimitive {
                     position: Vector3::from(position),
                     ..Vertex::default()
                 };
-                pos_min = Vector3::new(pos_min.x.min(v.position.x), pos_min.y.min(v.position.y), pos_min.z.min(v.position.z));
-                pos_max = Vector3::new(pos_max.x.max(v.position.x), pos_max.y.max(v.position.y), pos_max.z.max(v.position.z));
+                pos_min = Vector3::new(
+                    pos_min.x.min(v.position.x),
+                    pos_min.y.min(v.position.y),
+                    pos_min.z.min(v.position.z),
+                );
+                pos_max = Vector3::new(
+                    pos_max.x.max(v.position.x),
+                    pos_max.y.max(v.position.y),
+                    pos_max.z.max(v.position.z),
+                );
                 v
             })
             .collect();
