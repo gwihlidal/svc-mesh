@@ -43,6 +43,25 @@ pub struct GltfData {
     pub images: Vec<gltf::image::Data>,
 }
 
+impl GltfData {
+    /// Obtain the contents of a loaded buffer.
+    pub fn buffer(&self, buffer: &gltf::Buffer<'_>) -> Option<&[u8]> {
+        match self.buffers.get(buffer.index()) {
+            Some(ref buffer) => Some(*buffer),
+            None => None,
+        }
+    }
+
+    /// Obtain the contents of a loaded buffer view.
+    pub fn view(&self, view: &gltf::buffer::View<'_>) -> Option<&[u8]> {
+        self.buffer(&view.buffer()).map(|data| {
+            let begin = view.offset();
+            let end = begin + view.length();
+            &data[begin..end]
+        })
+    }
+}
+
 pub type GltfIndex = usize;
 
 pub fn read_to_end<P>(path: P) -> Result<Vec<u8>, Box<StdError>>
