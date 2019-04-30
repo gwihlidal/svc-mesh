@@ -18,7 +18,7 @@ pub struct GltfNode {
     pub name: Option<String>,
     pub mesh: Option<Rc<GltfMesh>>,
 
-    pub matrix: Matrix4,
+    //pub matrix: Matrix4,
     pub translation: Vector3,
     pub scale: Vector3,
     pub rotation: UnitQuaternion,
@@ -72,7 +72,7 @@ impl GltfNode {
             children: Vec::new(),
             name: node_ref.name().map(|s| s.into()),
             mesh,
-            matrix: Matrix4::new(
+            /*matrix: Matrix4::new(
                 matrix[0][0],
                 matrix[0][1],
                 matrix[0][2],
@@ -89,7 +89,7 @@ impl GltfNode {
                 matrix[3][1],
                 matrix[3][2],
                 matrix[3][3],
-            ),
+            ),*/
             translation: Vector3::new(translation[0], translation[1], translation[2]),
             scale: Vector3::new(scale[0], scale[1], scale[2]),
             rotation,
