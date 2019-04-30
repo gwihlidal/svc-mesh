@@ -54,38 +54,45 @@ pub struct Dimensions {
     pub radius: f32,
 }
 
+impl Default for Dimensions {
+    fn default() -> Dimensions {
+        use std::f32;
+        Dimensions {
+            min: Vector3::new(f32::MAX, f32::MAX, f32::MAX),
+            max: Vector3::new(f32::MIN, f32::MIN, f32::MIN),
+            size: Vector3::zero(),
+            center: Vector3::zero(),
+            radius: 0.0,
+        }
+    }
+}
+
+impl Dimensions {
+    pub fn new(min: Vector3, max: Vector3) -> Dimensions {
+        let distance = (max - min).norm();
+        Dimensions {
+            min,
+            max,
+            size: max - min,
+            center: (min + max) / 2.0,
+            radius: distance / 2.0,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct GltfPrimitive {
     pub mode: gltf::mesh::Mode,
-    //pub bounds: Aabb3,
     pub material: Option<GltfIndex>,
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u32>,
-    //pub dimensions: Dimensions,
-    /*
-    struct Dimensions
-    {
-        glm::vec3 min = glm::vec3(FLT_MAX);
-        glm::vec3 max = glm::vec3(-FLT_MAX);
-        glm::vec3 size;
-        glm::vec3 center;
-        float32 radius;
-    } dimensions;
-
-    void setDimensions(glm::vec3 min, glm::vec3 max)
-    {
-        dimensions.min = min;
-        dimensions.max = max;
-        dimensions.size = max - min;
-        dimensions.center = (min + max) / 2.0f;
-        dimensions.radius = glm::distance(min, max) / 2.0f;
-    }*/
+    pub dimensions: Dimensions,
 }
 
 impl GltfPrimitive {
     pub fn new(
         mode: gltf::mesh::Mode,
-        //bounds: Aabb3,
+        dimensions: Dimensions,
         vertices: &[Vertex],
         indices: Option<Vec<u32>>,
         material: Option<GltfIndex>,
@@ -98,10 +105,10 @@ impl GltfPrimitive {
         };
         GltfPrimitive {
             mode,
-            //bounds,
             material,
             vertices: vertices.to_vec(),
             indices,
+            dimensions,
         }
     }
 
@@ -113,6 +120,8 @@ impl GltfPrimitive {
         data: &GltfData,
         path: &Path,
     ) -> GltfPrimitive {
+        use std::f32;
+
         let buffers = &data.buffers;
         let reader = primitive_ref.reader(|buffer| Some(&buffers[buffer.index()]));
         let positions = {
@@ -125,15 +134,17 @@ impl GltfPrimitive {
             iter.collect::<Vec<_>>()
         };
 
-        /*let bounds = primitive_ref.bounding_box();
-        let bounds = Aabb3 {
+        let bounds = primitive_ref.bounding_box();
+        /*let bounds = Aabb3 {
             min: bounds.min.into(),
             max: bounds.max.into(),
         };*/
 
-        //println!("Bounds: {:?}", bounds);
+        println!("Bounds: {:?}", bounds);
 
-        //let mut pos_min: Vector3 = Point3::new(f32::FLT_MAX
+        let mut pos_min: Vector3 = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
+        let mut pos_max: Vector3 = Vector3::new(f32::MIN, f32::MIN, f32::MIN);
+
         let mut vertices: Vec<Vertex> = positions
             .into_iter()
             .map(|position| {
@@ -141,12 +152,15 @@ impl GltfPrimitive {
                     position: Vector3::from(position),
                     ..Vertex::default()
                 };
-                //v.position
+                pos_min = Vector3::new(pos_min.x.min(v.position.x), pos_min.y.min(v.position.y), pos_min.z.min(v.position.z));
+                pos_max = Vector3::new(pos_max.x.max(v.position.x), pos_max.y.max(v.position.y), pos_max.z.max(v.position.z));
                 v
             })
             .collect();
 
         println!("Vertex Count: {}", vertices.len());
+
+        println!("Min: {:?}, Max: {:?}", pos_min, pos_max);
 
         //let mut shader_flags = ShaderFlags::empty();
 
@@ -282,7 +296,7 @@ impl GltfPrimitive {
 
         GltfPrimitive::new(
             mode,
-            //bounds,
+            Dimensions::new(pos_min, pos_max),
             &vertices,
             indices,
             primitive_ref.material().index(),

@@ -2,17 +2,19 @@ use super::GltfData;
 use super::GltfIndex;
 use super::GltfMesh;
 use super::GltfModel;
-use crate::{Matrix4, Quaternion, UnitQuaternion, Vector3};
+use crate::{Matrix4, Quaternion, UnitQuaternion, Vector3, Vector4};
 use std::path::Path;
 use std::rc::Rc;
+use std::cell::RefCell;
 
 #[derive(Debug)]
 pub struct GltfNode {
     pub node_index: GltfIndex,
     pub joint_index: Option<GltfIndex>,
 
-    pub parent: Option<Rc<GltfNode>>,
-    pub children: Vec<GltfIndex>,
+    pub parent: Option<GltfNodeRef>,
+    pub children: Vec<GltfNodeRef>,
+
     pub name: Option<String>,
     pub mesh: Option<Rc<GltfMesh>>,
 
@@ -22,14 +24,16 @@ pub struct GltfNode {
     pub rotation: UnitQuaternion,
 }
 
+pub type GltfNodeRef = Rc<RefCell<GltfNode>>;
+
 impl GltfNode {
     pub fn from_gltf(
-        parent: Option<Rc<GltfNode>>,
+        parent: Option<GltfNodeRef>,
         node_ref: &gltf::Node<'_>,
         model: &mut GltfModel,
         data: &GltfData,
         base_path: &Path,
-    ) -> Rc<GltfNode> {
+    ) -> GltfNodeRef {
         let matrix = node_ref.transform().matrix();
         let (trans, rot, scale) = node_ref.transform().decomposed();
         let r = rot;
@@ -53,21 +57,11 @@ impl GltfNode {
             }
         }
 
-        let children: Vec<usize> = node_ref
-            .children()
-            .map(|node_ref| node_ref.index())
-            .collect();
-
-        /*let children: Vec<Rc<GltfNode>> = children
-        .iter()
-        .map(|node_index| model.unsafe_get_node_mut(*node_index).clone())
-        .collect();*/
-
-        let node = Rc::new(GltfNode {
+        let mut node = Rc::new(RefCell::new(GltfNode {
             node_index: node_ref.index(),
             joint_index: None,
             parent: parent.clone(),
-            children,
+            children: Vec::new(),
             name: node_ref.name().map(|s| s.into()),
             mesh,
             matrix: Matrix4::new(
@@ -91,7 +85,21 @@ impl GltfNode {
             translation: Vector3::new(trans[0], trans[1], trans[2]),
             scale: Vector3::new(scale[0], scale[1], scale[2]),
             rotation,
-        });
+        }));
+
+        let children: Vec<GltfNodeRef> = node_ref
+            .children()
+            .map(|ref node_ref| {
+                GltfNode::from_gltf(
+                    Some(node.clone()),
+                    node_ref,
+                    model,
+                    data,
+                    base_path,
+                )
+            }).collect();
+
+        node.borrow_mut().children = children;
 
         node
     }
@@ -107,8 +115,11 @@ impl GltfNode {
     pub fn get_matrix(&self) -> Matrix4 {
         let mut matrix = self.local_matrix();
         let mut current_parent = &self.parent;
+        println!("HERE");
         while let Some(ref parent) = current_parent {
+            let parent = parent.borrow();
             matrix = parent.local_matrix() * matrix;
+            println!("GW: {:?}", matrix);
             current_parent = &parent.parent;
         }
         matrix
@@ -117,33 +128,25 @@ impl GltfNode {
     pub fn compute_dimensions(&self, model: &GltfModel, min: &mut Vector3, max: &mut Vector3) {
         if let Some(ref mesh) = self.mesh {
             for primitive in &mesh.primitives {
-                /*   let bounds = primitives
-                .iter()
-                .fold(Aabb3::zero(), |bounds, prim| prim.bounds.union(&bounds));*/
+               // let loc_min = Vector4::new(primitive.dimensions.min.x, primitive.dimensions.min.y, primitive.dimensions.min.z, 1.0);
+                //let loc_max = Vector4::new(primitive.dimensions.max.x, primitive.dimensions.max.y, primitive.dimensions.max.z, 1.0);
+
+                let node_matrix = self.get_matrix();
+                let loc_min = node_matrix.transform_vector(&primitive.dimensions.min);
+                let loc_max = node_matrix.transform_vector(&primitive.dimensions.max);
+                
+                min.x = min.x.min(loc_min.x);
+                min.y = min.y.min(loc_min.y);
+                min.z = min.z.min(loc_min.z);
+
+                max.x = max.x.max(loc_max.x);
+                max.y = max.y.max(loc_max.y);
+                max.z = max.z.max(loc_max.z);
             }
         }
 
-        for i in 0..self.children.len() {
-            let child_index = self.children[i];
-            let child_node = &model.nodes[child_index];
-            child_node.compute_dimensions(model, min, max);
+        for child_node in &self.children {
+            child_node.borrow_mut().compute_dimensions(model, min, max);
         }
-
-        /*
-        if (node->mesh)
-        {
-            for (GltfPrimitive* primitive : node->mesh->primitives)
-            {
-                glm::vec4 locMin = glm::vec4(primitive->dimensions.min, 1.0f) * node->getMatrix();
-                glm::vec4 locMax = glm::vec4(primitive->dimensions.max, 1.0f) * node->getMatrix();
-                if (locMin.x < min.x) { min.x = locMin.x; }
-                if (locMin.y < min.y) { min.y = locMin.y; }
-                if (locMin.z < min.z) { min.z = locMin.z; }
-                if (locMax.x > max.x) { max.x = locMax.x; }
-                if (locMax.y > max.y) { max.y = locMax.y; }
-                if (locMax.z > max.z) { max.z = locMax.z; }
-            }
-        }
-        */
     }
 }

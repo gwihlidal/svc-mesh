@@ -5,6 +5,8 @@ use crate::GltfMesh;
 use crate::GltfNode;
 use crate::GltfSkin;
 use crate::GltfTexture;
+use crate::Dimensions;
+use crate::Vector3;
 use std::path::Path;
 use std::rc::Rc;
 
@@ -17,6 +19,8 @@ pub struct GltfModel {
     pub materials: Vec<Rc<GltfMaterial>>,
     pub animations: Vec<Rc<GltfAnimation>>,
     pub skins: Vec<Rc<GltfSkin>>,
+
+    pub dimensions: Dimensions,
 }
 
 impl GltfModel {
@@ -70,7 +74,8 @@ impl GltfModel {
 
         // Finalize
         model.merge_skins();
-        model.compute_bounds();
+        model.compute_dimensions();
+        println!("Dimensions: {:?}", model.dimensions);
         model
     }
 
@@ -100,17 +105,13 @@ impl GltfModel {
         */
     }
 
-    fn compute_bounds(&mut self) {
-        /*
-        dimensions.min = glm::vec3(FLT_MAX);
-        dimensions.max = glm::vec3(-FLT_MAX);
-        for (auto node : nodes)
-        {
-            getNodeDimensions(node, dimensions.min, dimensions.max);
+    fn compute_dimensions(&mut self) {
+        use std::f32;
+        let mut min = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
+        let mut max = Vector3::new(f32::MIN, f32::MIN, f32::MIN);
+        for node in &self.nodes {
+            node.compute_dimensions(self, &mut min, &mut max);
         }
-        dimensions.size = dimensions.max - dimensions.min;
-        dimensions.center = (dimensions.min + dimensions.max) / 2.0f;
-        dimensions.radius = glm::distance(dimensions.min, dimensions.max) / 2.0f;
-        */
+        self.dimensions = Dimensions::new(min, max);
     }
 }
