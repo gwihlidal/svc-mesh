@@ -2,7 +2,7 @@ use super::GltfData;
 use super::GltfIndex;
 use super::GltfMesh;
 use super::GltfModel;
-use crate::{Matrix4, Quaternion, UnitQuaternion, Vector3, Vector4};
+use crate::{Matrix4, Quaternion, Unit, UnitQuaternion, Vector3, Vector4};
 use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
@@ -34,12 +34,20 @@ impl GltfNode {
         data: &GltfData,
         base_path: &Path,
     ) -> GltfNodeRef {
+        // Load transformation data, default will be identity
+        let (translation, rotation, scale) = node_ref.transform().decomposed();
+
         let matrix = node_ref.transform().matrix();
-        let (trans, rot, scale) = node_ref.transform().decomposed();
-        let r = rot;
-        let rotation = Quaternion::new(r[0], r[1], r[2], r[3]);
-        //let rotation = Quaternion::new(r[3], r[0], r[1], r[2]); // NOTE: different element order!
-        let rotation = UnitQuaternion::from_quaternion(rotation);
+        let (translation, rotation, scale) = node_ref.transform().decomposed();
+        // gltf quat format: [x, y, z, w], argument order expected by our quaternion: (w, x, y, z)
+        //let rotation = Unit::new_normalize(Quaternion::new(rotation[3], rotation[0], rotation[1], rotation[2]));
+        let rotation = Unit::new_normalize(Quaternion::new(
+            rotation[0],
+            rotation[1],
+            rotation[2],
+            rotation[3],
+        ));
+        //let rotation = UnitQuaternion::from_quaternion(rotation);
 
         let mut mesh = None;
         if let Some(mesh_ref) = node_ref.mesh() {
@@ -82,7 +90,7 @@ impl GltfNode {
                 matrix[3][2],
                 matrix[3][3],
             ),
-            translation: Vector3::new(trans[0], trans[1], trans[2]),
+            translation: Vector3::new(translation[0], translation[1], translation[2]),
             scale: Vector3::new(scale[0], scale[1], scale[2]),
             rotation,
         }));
