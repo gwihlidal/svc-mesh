@@ -57,7 +57,7 @@ pub struct Dimensions {
 #[derive(Debug)]
 pub struct GltfPrimitive {
     pub mode: gltf::mesh::Mode,
-    pub bounds: Aabb3,
+    //pub bounds: Aabb3,
     pub material: Option<GltfIndex>,
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u32>,
@@ -85,7 +85,7 @@ pub struct GltfPrimitive {
 impl GltfPrimitive {
     pub fn new(
         mode: gltf::mesh::Mode,
-        bounds: Aabb3,
+        //bounds: Aabb3,
         vertices: &[Vertex],
         indices: Option<Vec<u32>>,
         material: Option<GltfIndex>,
@@ -98,7 +98,7 @@ impl GltfPrimitive {
         };
         GltfPrimitive {
             mode,
-            bounds,
+            //bounds,
             material,
             vertices: vertices.to_vec(),
             indices,
@@ -125,13 +125,13 @@ impl GltfPrimitive {
             iter.collect::<Vec<_>>()
         };
 
-        let bounds = primitive_ref.bounding_box();
+        /*let bounds = primitive_ref.bounding_box();
         let bounds = Aabb3 {
             min: bounds.min.into(),
             max: bounds.max.into(),
-        };
+        };*/
 
-        println!("Bounds: {:?}", bounds);
+        //println!("Bounds: {:?}", bounds);
 
         //let mut pos_min: Vector3 = Point3::new(f32::FLT_MAX
         let mut vertices: Vec<Vertex> = positions
@@ -282,7 +282,7 @@ impl GltfPrimitive {
 
         GltfPrimitive::new(
             mode,
-            bounds,
+            //bounds,
             &vertices,
             indices,
             primitive_ref.material().index(),

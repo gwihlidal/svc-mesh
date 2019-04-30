@@ -6,7 +6,6 @@ use crate::GltfData;
 use crate::GltfIndex;
 use crate::Matrix4;
 use crate::StdError;
-//use cgmath::SquareMatrix;
 use std::collections::HashMap;
 use std::path::Path;
 use std::rc::Rc;
@@ -60,10 +59,15 @@ impl GltfSkin {
             })
             .collect();
 
-        //let reader = skin_ref.reader(|buffer| data.buffers(&buffer));
+        let reader = skin_ref.reader(|buffer| data.buffer(&buffer));
+
+        let inv_bind_matrices = reader
+            .read_inverse_bind_matrices()
+            .map(|matrices| matrices.map(|m| m.into()).collect())
+            .unwrap_or(vec![Matrix4::identity().into(); joints.len()]);
 
         // Get inverse bind matrices from buffer
-        let inv_bind_matrices = if let Some(accessor) = skin_ref.inverse_bind_matrices() {
+        /*let inv_bind_matrices = if let Some(accessor) = skin_ref.inverse_bind_matrices() {
             assert_eq!(accessor.count(), joints.len());
             match (accessor.data_type(), accessor.dimensions()) {
                 //Mat4,
@@ -74,10 +78,10 @@ impl GltfSkin {
                     let buffer_data = data.buffers[buffer_index].0.as_slice();
                     let buffer_data = &buffer_data[buffer_offset..(buffer_offset + 4)];
 
-                    let iter = gltf::accessor::Iter::<[f32; 3]>::new(accessor, buffer_data);
-                    for item in iter {
-                        println!("{:?}", item);
-                    }
+                    //let iter = gltf::accessor::Iter::<Matrix4<f32>>::new(accessor, buffer_data);
+                    //for item in iter {
+                    //    println!("{:?}", item);
+                    //}
                 }
                 _ => {
                     println!(
@@ -93,7 +97,7 @@ impl GltfSkin {
         } else {
             Vec::new()
             //vec![Matrix4::identity().into(); joints.len()]
-        };
+        };*/
 
         Rc::new(GltfSkin {
             skin_index: skin_ref.index(),

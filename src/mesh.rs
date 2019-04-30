@@ -12,7 +12,7 @@ pub struct GltfMesh {
     pub index: GltfIndex,
     pub primitives: Vec<GltfPrimitive>,
     pub name: Option<String>,
-    pub bounds: Aabb3,
+    //pub bounds: Aabb3,
 }
 
 impl GltfMesh {
@@ -30,15 +30,15 @@ impl GltfMesh {
             })
             .collect();
 
-        let bounds = primitives
-            .iter()
-            .fold(Aabb3::zero(), |bounds, prim| prim.bounds.union(&bounds));
+        /*let bounds = primitives
+        .iter()
+        .fold(Aabb3::zero(), |bounds, prim| prim.bounds.union(&bounds));*/
 
         Rc::new(GltfMesh {
             index: mesh_ref.index(),
             primitives,
             name: mesh_ref.name().map(|s| s.into()),
-            bounds,
+            //bounds,
         })
     }
 }

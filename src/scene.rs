@@ -5,7 +5,7 @@ use super::GltfModel;
 pub struct GltfScene {
     pub name: Option<String>,
     pub nodes: Vec<usize>,
-    pub bounds: Aabb3,
+    //pub bounds: Aabb3,
 }
 
 impl Default for GltfScene {
@@ -13,7 +13,7 @@ impl Default for GltfScene {
         Self {
             name: None,
             nodes: vec![],
-            bounds: Aabb3::new(Point3::new(0.0, 0.0, 0.0), Point3::new(0.0, 0.0, 0.0)),
+            //bounds: Aabb3::new(Point3::new(0.0, 0.0, 0.0), Point3::new(0.0, 0.0, 0.0)),
         }
     }
 }

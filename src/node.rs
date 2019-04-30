@@ -2,7 +2,7 @@ use super::GltfData;
 use super::GltfIndex;
 use super::GltfMesh;
 use super::GltfModel;
-use crate::{Matrix4, Quaternion, Vector3};
+use crate::{Matrix4, Quaternion, UnitQuaternion, Vector3};
 use std::path::Path;
 use std::rc::Rc;
 
@@ -19,7 +19,7 @@ pub struct GltfNode {
     pub matrix: Matrix4,
     pub translation: Vector3,
     pub scale: Vector3,
-    pub rotation: Quaternion,
+    pub rotation: UnitQuaternion,
 }
 
 impl GltfNode {
@@ -30,10 +30,12 @@ impl GltfNode {
         data: &GltfData,
         base_path: &Path,
     ) -> Rc<GltfNode> {
+        let matrix = node_ref.transform().matrix();
         let (trans, rot, scale) = node_ref.transform().decomposed();
         let r = rot;
-        let rotation = Quaternion::new(r[3], r[0], r[1], r[2]); // NOTE: different element order!
-        let matrix = node_ref.transform().matrix();
+        let rotation = Quaternion::new(r[0], r[1], r[2], r[3]);
+        //let rotation = UnitQuaternion::new(r[3], r[0], r[1], r[2]); // NOTE: different element order!
+        let rotation = UnitQuaternion::from_quaternion(rotation);
 
         let mut mesh = None;
         if let Some(mesh_ref) = node_ref.mesh() {
@@ -95,9 +97,10 @@ impl GltfNode {
     }
 
     pub fn local_matrix(&self) -> Matrix4 {
-        let translation = Matrix4::from_translation(self.translation);
-        let rotation: Matrix4 = self.rotation.into();
-        let scale = Matrix4::from_nonuniform_scale(self.scale.x, self.scale.y, self.scale.z);
+        let translation = Matrix4::new_translation(&self.translation);
+        //let rotation = UnitQuaternion::new_unchecked(*self.rotation).to_homogeneous();
+        let rotation = self.rotation.to_homogeneous();
+        let scale = Matrix4::new_nonuniform_scaling(&self.scale);
         translation * rotation * scale
     }
 
