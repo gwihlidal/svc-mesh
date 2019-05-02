@@ -5,7 +5,7 @@ use crate::GltfBuffers;
 use crate::GltfData;
 use crate::GltfIndex;
 use crate::Matrix4;
-use crate::StdError;
+use crate::Vector4;
 use std::collections::HashMap;
 use std::path::Path;
 use std::rc::Rc;
@@ -14,6 +14,7 @@ use std::rc::Rc;
 pub enum GltfInterpolationType {
     Linear,
     Step,
+    CatmullRomSpline,
     CubicSpline,
 }
 
@@ -173,11 +174,67 @@ pub fn load_skin(
 */
 
 #[derive(Debug)]
-pub struct GltfAnimationSampler {}
+pub struct GltfAnimationSampler {
+    pub inputs: Vec<f32>,
+}
 
 impl GltfAnimationSampler {
-    pub fn from_gltf(animation_ref: &gltf::animation::Sampler<'_>) -> GltfAnimationSampler {
-        GltfAnimationSampler {}
+    pub fn from_gltf(
+        sampler_ref: &gltf::animation::Sampler<'_>,
+        data: &GltfData,
+    ) -> GltfAnimationSampler {
+        use gltf::animation::Interpolation;
+        let interpolation = match sampler_ref.interpolation() {
+            Interpolation::Linear => GltfInterpolationType::Linear,
+            Interpolation::Step => GltfInterpolationType::Step,
+            Interpolation::CatmullRomSpline => GltfInterpolationType::CatmullRomSpline,
+            Interpolation::CubicSpline => GltfInterpolationType::CubicSpline,
+        };
+
+        // Read sampler input time values
+        let input = sampler_ref.input();
+        assert_eq!(input.data_type(), gltf::accessor::DataType::F32);
+        let buffer_view = input.view();
+        let buffer = buffer_view.buffer();
+
+        let inputs: Vec<f32> = match (input.data_type(), input.dimensions()) {
+            (gltf::accessor::DataType::F32, gltf::accessor::Dimensions::Scalar) => {
+                let buffer_index = input.view().buffer().index();
+                let buffer_data = data.buffers[buffer_index].0.as_slice();
+                let iter = gltf::accessor::Iter::<f32>::new(input, buffer_data);
+                iter.collect()
+            }
+            _ => unimplemented!(),
+        };
+
+        // Read sampler output T/R/S values
+        let output = sampler_ref.output();
+        let buffer_view = output.view();
+        let buffer = buffer_view.buffer();
+
+        let outputs: Vec<Vector4> = match (output.data_type(), output.dimensions()) {
+            (gltf::accessor::DataType::F32, gltf::accessor::Dimensions::Scalar) => {
+                let buffer_index = output.view().buffer().index();
+                let buffer_data = data.buffers[buffer_index].0.as_slice();
+                let iter = gltf::accessor::Iter::<f32>::new(output, buffer_data);
+                iter.map(|x| Vector4::new(x, x, x, x)).collect()
+            }
+            (gltf::accessor::DataType::F32, gltf::accessor::Dimensions::Vec3) => {
+                let buffer_index = output.view().buffer().index();
+                let buffer_data = data.buffers[buffer_index].0.as_slice();
+                let iter = gltf::accessor::Iter::<[f32; 3]>::new(output, buffer_data);
+                iter.map(|[x, y, z]| Vector4::new(x, y, z, 0.0)).collect()
+            }
+            (gltf::accessor::DataType::F32, gltf::accessor::Dimensions::Vec4) => {
+                let buffer_index = output.view().buffer().index();
+                let buffer_data = data.buffers[buffer_index].0.as_slice();
+                let iter = gltf::accessor::Iter::<[f32; 4]>::new(output, buffer_data);
+                iter.map(|[x, y, z, w]| Vector4::new(x, y, z, w)).collect()
+            }
+            _ => unimplemented!(),
+        };
+
+        GltfAnimationSampler { inputs }
     }
 }
 
@@ -220,10 +277,17 @@ impl GltfAnimation {
         let mut start = f32::MAX;
         let mut end = f32::MIN;
 
-        let samplers = animation_ref
+        let samplers: Vec<GltfAnimationSampler> = animation_ref
             .samplers()
-            .map(|sampler_ref| GltfAnimationSampler::from_gltf(&sampler_ref))
+            .map(|sampler_ref| GltfAnimationSampler::from_gltf(&sampler_ref, data))
             .collect();
+
+        for sampler in &samplers {
+            for input in &sampler.inputs {
+                start = start.min(*input);
+                end = end.max(*input);
+            }
+        }
 
         let channels = animation_ref
             .channels()

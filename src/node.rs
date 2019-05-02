@@ -128,9 +128,13 @@ impl GltfNode {
         current_matrix: &Matrix4,
     ) -> Matrix4 {
         if let Some(parent) = parent_ref {
-            let matrix = parent.borrow().local_matrix() * current_matrix;
             let next_parent = parent.borrow().parent.clone();
+
+            let matrix = parent.borrow().local_matrix() * current_matrix;
             self.get_matrix_chain(next_parent, &matrix)
+
+        //let matrix = self.get_matrix_chain(next_parent, &current_matrix);
+        //parent.borrow().local_matrix() * matrix
         } else {
             current_matrix.clone()
         }
@@ -138,11 +142,12 @@ impl GltfNode {
 
     pub fn compute_dimensions(&self, model: &GltfModel, min: &mut Vector3, max: &mut Vector3) {
         if let Some(ref mesh) = self.mesh {
+            let node_matrix = self.get_matrix();
+
             for primitive in &mesh.primitives {
                 // let loc_min = Vector4::new(primitive.dimensions.min.x, primitive.dimensions.min.y, primitive.dimensions.min.z, 1.0);
                 //let loc_max = Vector4::new(primitive.dimensions.max.x, primitive.dimensions.max.y, primitive.dimensions.max.z, 1.0);
 
-                let node_matrix = self.get_matrix();
                 //println!("Node Matrix: {:?}", node_matrix);
                 let loc_min = node_matrix.transform_vector(&primitive.dimensions.min);
                 let loc_max = node_matrix.transform_vector(&primitive.dimensions.max);
