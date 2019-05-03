@@ -39,14 +39,15 @@ impl GltfNode {
 
         let matrix = node_ref.transform().matrix();
         let (translation, rotation, scale) = node_ref.transform().decomposed();
+        //println!("Raw Rotation: {:?}", rotation);
         // gltf quat format: [x, y, z, w], argument order expected by our quaternion: (w, x, y, z)
-        //let rotation = Unit::new_normalize(Quaternion::new(rotation[3], rotation[0], rotation[1], rotation[2]));
-        let rotation = Unit::new_normalize(Quaternion::new(
+        let rotation = Unit::new_normalize(Quaternion::new(rotation[3], rotation[0], rotation[1], rotation[2]));
+        /*let rotation = Unit::new_normalize(Quaternion::new(
             rotation[0],
             rotation[1],
             rotation[2],
             rotation[3],
-        ));
+        ));*/
         //let rotation = UnitQuaternion::from_quaternion(rotation);
 
         let mut mesh = None;
@@ -95,6 +96,8 @@ impl GltfNode {
             rotation,
         }));
 
+        //println!("Node Rotation: {:?}", node.borrow().rotation);
+
         let children: Vec<GltfNodeRef> = node_ref
             .children()
             .map(|ref node_ref| {
@@ -109,16 +112,21 @@ impl GltfNode {
 
     pub fn local_matrix(&self) -> Matrix4 {
         let translation = Matrix4::new_translation(&self.translation);
+        println!("Local Translation: {:?}", translation);
         //let rotation = UnitQuaternion::new_unchecked(*self.rotation).to_homogeneous();
+        println!("Local Rotation1: {:?}", self.rotation);
         let rotation = self.rotation.to_homogeneous();
+        println!("Local Rotation2: {:?}", rotation);
         let scale = Matrix4::new_nonuniform_scaling(&self.scale);
+        println!("Local Scale: {:?}", scale);
         translation * rotation * scale
     }
 
     pub fn get_matrix(&self) -> Matrix4 {
         let local_matrix = self.local_matrix();
+        println!("Local Matrix: {:?}", local_matrix);
         let chained_matrix = self.get_matrix_chain(self.parent.clone(), &local_matrix);
-        println!("GW: {:?}", chained_matrix);
+        println!("Chained Matrix: {:?}", chained_matrix);
         chained_matrix
     }
 
