@@ -18,7 +18,6 @@ pub struct GltfNode {
     pub name: Option<String>,
     pub mesh: Option<Rc<GltfMesh>>,
 
-    //pub matrix: Matrix4,
     pub translation: Vector3,
     pub scale: Vector3,
     pub rotation: UnitQuaternion,
@@ -36,12 +35,16 @@ impl GltfNode {
     ) -> GltfNodeRef {
         // Load transformation data, default will be identity
         let (translation, rotation, scale) = node_ref.transform().decomposed();
+        //let matrix = node_ref.transform().matrix();
 
-        let matrix = node_ref.transform().matrix();
-        let (translation, rotation, scale) = node_ref.transform().decomposed();
         //println!("Raw Rotation: {:?}", rotation);
         // gltf quat format: [x, y, z, w], argument order expected by our quaternion: (w, x, y, z)
-        let rotation = Unit::new_normalize(Quaternion::new(rotation[3], rotation[0], rotation[1], rotation[2]));
+        let rotation = Unit::new_normalize(Quaternion::new(
+            rotation[3],
+            rotation[0],
+            rotation[1],
+            rotation[2],
+        ));
         /*let rotation = Unit::new_normalize(Quaternion::new(
             rotation[0],
             rotation[1],
@@ -73,24 +76,6 @@ impl GltfNode {
             children: Vec::new(),
             name: node_ref.name().map(|s| s.into()),
             mesh,
-            /*matrix: Matrix4::new(
-                matrix[0][0],
-                matrix[0][1],
-                matrix[0][2],
-                matrix[0][3],
-                matrix[1][0],
-                matrix[1][1],
-                matrix[1][2],
-                matrix[1][3],
-                matrix[2][0],
-                matrix[2][1],
-                matrix[2][2],
-                matrix[2][3],
-                matrix[3][0],
-                matrix[3][1],
-                matrix[3][2],
-                matrix[3][3],
-            ),*/
             translation: Vector3::new(translation[0], translation[1], translation[2]),
             scale: Vector3::new(scale[0], scale[1], scale[2]),
             rotation,
@@ -112,13 +97,13 @@ impl GltfNode {
 
     pub fn local_matrix(&self) -> Matrix4 {
         let translation = Matrix4::new_translation(&self.translation);
-        println!("Local Translation: {:?}", translation);
+        //println!("Local Translation: {:?}", translation);
         //let rotation = UnitQuaternion::new_unchecked(*self.rotation).to_homogeneous();
-        println!("Local Rotation1: {:?}", self.rotation);
+        //println!("Local Rotation1: {:?}", self.rotation);
         let rotation = self.rotation.to_homogeneous();
-        println!("Local Rotation2: {:?}", rotation);
+        //println!("Local Rotation2: {:?}", rotation);
         let scale = Matrix4::new_nonuniform_scaling(&self.scale);
-        println!("Local Scale: {:?}", scale);
+        //println!("Local Scale: {:?}", scale);
         translation * rotation * scale
     }
 
@@ -153,7 +138,7 @@ impl GltfNode {
             let node_matrix = self.get_matrix();
 
             for primitive in &mesh.primitives {
-                // let loc_min = Vector4::new(primitive.dimensions.min.x, primitive.dimensions.min.y, primitive.dimensions.min.z, 1.0);
+                //let loc_min = Vector4::new(primitive.dimensions.min.x, primitive.dimensions.min.y, primitive.dimensions.min.z, 1.0);
                 //let loc_max = Vector4::new(primitive.dimensions.max.x, primitive.dimensions.max.y, primitive.dimensions.max.z, 1.0);
 
                 //println!("Node Matrix: {:?}", node_matrix);
