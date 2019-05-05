@@ -15,6 +15,7 @@ mod node;
 mod primitive;
 mod scene;
 mod texture;
+mod tangents;
 
 use animation::*;
 use data::*;
@@ -27,6 +28,7 @@ use node::*;
 use primitive::*;
 use scene::*;
 use texture::*;
+use tangents::*;
 
 fn load_model(model_path: &Path) -> Result<(), Box<StdError>> {
     let _base_path = model_path.parent().unwrap_or(Path::new("./"));

@@ -124,6 +124,32 @@ impl GltfPrimitive {
 
         let buffers = &data.buffers;
         let reader = primitive_ref.reader(|buffer| Some(&buffers[buffer.index()]));
+
+        let faces = reader
+            .read_indices()
+            .map(|indices| indices.into_u32())
+            .map(|mut indices| {
+                let mut faces = vec![];
+                while let (Some(a), Some(b), Some(c)) =
+                    (indices.next(), indices.next(), indices.next())
+                {
+                    faces.push(a as usize);
+                    faces.push(b as usize);
+                    faces.push(c as usize);
+                }
+                faces
+            });
+
+        /*let positions = reader
+            .read_positions()
+            .map(|positions| match faces {
+                Some(ref faces) => {
+                    let vertices = positions.collect::<Vec<_>>();
+                    faces.iter().map(|i| vertices[*i]).collect::<Vec<_>>()
+                }
+                None => positions.collect(),
+            })
+            //.ok_or(error::Error::MissingPositions)?;*/
         let positions = {
             let iter = reader.read_positions().unwrap_or_else(|| {
                 panic!(
@@ -186,20 +212,6 @@ impl GltfPrimitive {
             );
         }
 
-        // tangents
-        if let Some(tangents) = reader.read_tangents() {
-            for (i, tangent) in tangents.enumerate() {
-                vertices[i].tangent = Vector4::from(tangent);
-            }
-        //shader_flags |= ShaderFlags::HAS_TANGENTS;
-        } else {
-            debug!(
-                "Found no TANGENTS for primitive {} of mesh {} \
-                 (tangent calculation not implemented yet)",
-                primitive_index, mesh_index
-            );
-        }
-
         // texture coordinates
         if let Some(tex_coords) = reader.read_tex_coords(0) {
             for (i, tex_coord) in tex_coords.into_f32().enumerate() {
@@ -224,6 +236,43 @@ impl GltfPrimitive {
             warn!("Ignoring further color attributes, only supporting COLOR_0. (mesh: {}, primitive: {})",
                 mesh_index, primitive_index);
         }
+
+        // tangents
+        /*if let Some(tangents) = reader.read_tangents() {
+            for (i, tangent) in tangents.enumerate() {
+                vertices[i].tangent = Vector4::from(tangent);
+            }
+        //shader_flags |= ShaderFlags::HAS_TANGENTS;
+        } else {
+            debug!(
+                "Found no TANGENTS for primitive {} of mesh {} \
+                 (tangent calculation not implemented yet)",
+                primitive_index, mesh_index
+            );
+        }*/
+        /*let tangents = reader
+            .read_tangents()
+            .map(|tangents| match faces {
+                Some(ref faces) => {
+                    let tangents = tangents.collect::<Vec<_>>();
+                    faces
+                        .iter()
+                        .map(|i| [tangents[*i][0], tangents[*i][1], tangents[*i][2]])
+                        .collect()
+                }
+                None => tangents.map(|t| [t[0], t[1], t[2]]).collect(),
+            })
+            .unwrap_or_else(|| calculate_tangents(&positions, &normals, &tex_coord));*/
+
+        /*fn iterate_slices_counted_2<T>(xs: &[T], ys: &[T]) {
+            let len = cmp::min(xs.len(), ys.len());
+            let xs = &xs[..len];
+            let ys = &ys[..len];
+            for i in 0..len {
+                let x = &xs[i];
+                let y = &ys[i];
+            }
+        }*/
 
         let mut joint_set = 0;
         while let Some(joints) = reader.read_joints(joint_set) {
