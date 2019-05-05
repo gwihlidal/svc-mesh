@@ -1,11 +1,10 @@
 //use gltf::{buffer::Source as BufferSource, image::Source as ImageSource, Gltf};
-use std::boxed::Box;
-use std::error::Error as StdError;
 use std::path::Path;
 //use std::rc::Rc;
 
 mod animation;
 mod data;
+mod error;
 mod format;
 mod material;
 mod math;
@@ -14,12 +13,13 @@ mod model;
 mod node;
 mod primitive;
 mod scene;
-mod texture;
 mod tangents;
+mod texture;
 
 use animation::*;
 use data::*;
 //use format::*;
+use error::*;
 use material::*;
 use math::*;
 use mesh::*;
@@ -27,26 +27,16 @@ use model::*;
 use node::*;
 use primitive::*;
 use scene::*;
-use texture::*;
 use tangents::*;
+use texture::*;
 
-fn load_model(model_path: &Path) -> Result<(), Box<StdError>> {
+fn load_model(model_path: &Path) -> Result<()> {
     let _base_path = model_path.parent().unwrap_or(Path::new("./"));
     //let gltf_data = read_to_end(model_path)?;
     //let (gltf, gltf_buffers) = import(&gltf_data, base_path)?;
     //println!("gltf: {:?}", gltf);
 
-    let (document, buffers, images) = match gltf::import(model_path) {
-        Ok(tuple) => tuple,
-        Err(_err) => {
-            //error!("glTF import failed: {:?}", err);
-            //if let gltf::Error::Io(_) = err {
-            //error!("Hint: Are the .bin file(s) referenced by the .gltf file available?")
-            //}
-            //process::exit(1)
-            panic!("failed to load ")
-        }
-    };
+    let (document, buffers, images) = gltf::import(model_path)?;
 
     /* for gltf_materal in &document.materials {
         let mat = Rc::new(GltfMaterial::from_gltf(&material_ref, model, data, path));
@@ -59,7 +49,7 @@ fn load_model(model_path: &Path) -> Result<(), Box<StdError>> {
         images,
     };
 
-    let mut model = GltfModel::from_gltf(&data, model_path);
+    let mut model = GltfModel::from_gltf(&data, model_path)?;
 
     let scene_count = data.document.scenes().len();
     let scene_index = 0;
@@ -71,7 +61,7 @@ fn load_model(model_path: &Path) -> Result<(), Box<StdError>> {
     println!("Scene count: {}", scene_count);
 
     let gltf_scene = data.document.scenes().nth(scene_index).unwrap();
-    let scene = GltfScene::from_gltf(&gltf_scene, &mut model);
+    let scene = GltfScene::from_gltf(&gltf_scene, &mut model)?;
     println!("Scene Dimensions: {:?}", scene.dimensions);
     Ok(())
 }

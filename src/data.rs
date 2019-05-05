@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use crate::StdError;
+//use crate::StdError;
+use crate::Result;
 use std::path::Path;
 use std::{fs, io};
 
@@ -64,7 +65,7 @@ impl GltfData {
 
 pub type GltfIndex = usize;
 
-pub fn read_to_end<P>(path: P) -> Result<Vec<u8>, Box<StdError>>
+pub fn read_to_end<P>(path: P) -> Result<Vec<u8>>
 where
     P: AsRef<Path>,
 {
@@ -97,7 +98,7 @@ pub fn get_image_data(
     image: &gltf::Image<'_>,
     buffers: &GltfBuffers,
     base_path: &Path,
-) -> Result<(Vec<u8>, ImageFormat), Box<StdError>> {
+) -> Result<(Vec<u8>, ImageFormat)> {
     use gltf::image::Source;
     match image.source() {
         Source::View { view, mime_type } => {
@@ -177,7 +178,7 @@ fn load_external_buffers(
     base_path: &Path,
     gltf: &gltf::Gltf,
     mut bin: Option<Vec<u8>>,
-) -> Result<Vec<Vec<u8>>, Box<StdError>> {
+) -> Result<Vec<Vec<u8>>> {
     use gltf::buffer::Source;
     let mut buffers = vec![];
     for (index, buffer) in gltf.buffers().enumerate() {
@@ -205,7 +206,7 @@ fn load_external_buffers(
     Ok(buffers)
 }
 
-pub fn load_data<P>(path: P) -> Result<Vec<u8>, Box<StdError>>
+pub fn load_data<P>(path: P) -> Result<Vec<u8>>
 where
     P: AsRef<Path>,
 {
@@ -218,19 +219,13 @@ where
     Ok(v)
 }
 
-fn import_standard(
-    data: &[u8],
-    base_path: &Path,
-) -> Result<(gltf::Gltf, GltfBuffers), Box<StdError>> {
+fn import_standard(data: &[u8], base_path: &Path) -> Result<(gltf::Gltf, GltfBuffers)> {
     let gltf = gltf::Gltf::from_slice(data)?;
     let buffers = GltfBuffers(load_external_buffers(base_path, &gltf, None)?);
     Ok((gltf, buffers))
 }
 
-fn import_binary(
-    data: &[u8],
-    base_path: &Path,
-) -> Result<(gltf::Gltf, GltfBuffers), Box<StdError>> {
+fn import_binary(data: &[u8], base_path: &Path) -> Result<(gltf::Gltf, GltfBuffers)> {
     let gltf::binary::Glb {
         header: _,
         json,
@@ -242,7 +237,7 @@ fn import_binary(
     Ok((gltf, buffers))
 }
 
-pub fn _import<P>(data: &[u8], path: P) -> Result<(gltf::Gltf, GltfBuffers), Box<StdError>>
+pub fn _import<P>(data: &[u8], path: P) -> Result<(gltf::Gltf, GltfBuffers)>
 where
     P: AsRef<Path>,
 {
@@ -254,7 +249,7 @@ where
     }
 }
 
-fn parse_data_uri(uri: &str) -> Result<Vec<u8>, Box<StdError>> {
+fn parse_data_uri(uri: &str) -> Result<Vec<u8>> {
     let encoded = uri.split(",").nth(1).expect("URI does not contain ','");
     let decoded = base64::decode(&encoded)?;
     Ok(decoded)

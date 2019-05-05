@@ -2,6 +2,7 @@ use super::GltfData;
 use super::GltfIndex;
 use super::GltfMesh;
 use super::GltfModel;
+use crate::Result;
 use crate::{Matrix4, Quaternion, Unit, UnitQuaternion, Vector3 /*, Vector4*/};
 use std::cell::RefCell;
 use std::path::Path;
@@ -32,12 +33,11 @@ impl GltfNode {
         model: &mut GltfModel,
         data: &GltfData,
         base_path: &Path,
-    ) -> GltfNodeRef {
+    ) -> Result<GltfNodeRef> {
         // Load transformation data, default will be identity
         let (translation, rotation, scale) = node_ref.transform().decomposed();
         //let matrix = node_ref.transform().matrix();
 
-        //println!("Raw Rotation: {:?}", rotation);
         // gltf quat format: [x, y, z, w], argument order expected by our quaternion: (w, x, y, z)
         let rotation = Unit::new_normalize(Quaternion::new(
             rotation[3],
@@ -45,13 +45,6 @@ impl GltfNode {
             rotation[1],
             rotation[2],
         ));
-        /*let rotation = Unit::new_normalize(Quaternion::new(
-            rotation[0],
-            rotation[1],
-            rotation[2],
-            rotation[3],
-        ));*/
-        //let rotation = UnitQuaternion::from_quaternion(rotation);
 
         let mut mesh = None;
         if let Some(mesh_ref) = node_ref.mesh() {
@@ -64,7 +57,7 @@ impl GltfNode {
             }
 
             if mesh.is_none() {
-                mesh = Some(GltfMesh::from_gltf(&mesh_ref, model, data, base_path));
+                mesh = Some(GltfMesh::from_gltf(&mesh_ref, model, data, base_path)?);
                 model.meshes.push(mesh.clone().unwrap());
             }
         }
@@ -83,16 +76,16 @@ impl GltfNode {
 
         //println!("Node Rotation: {:?}", node.borrow().rotation);
 
-        let children: Vec<GltfNodeRef> = node_ref
+        let children = node_ref
             .children()
             .map(|ref node_ref| {
                 GltfNode::from_gltf(Some(node.clone()), node_ref, model, data, base_path)
             })
-            .collect();
+            .collect::<Result<Vec<GltfNodeRef>>>()?;
 
         node.borrow_mut().children = children;
 
-        node
+        Ok(node)
     }
 
     pub fn local_matrix(&self) -> Matrix4 {

@@ -3,9 +3,9 @@ use super::GltfData;
 use super::GltfIndex;
 //use super::GltfMaterial;
 use super::GltfModel;
+use crate::Result;
 use log::{debug, warn};
 use std::path::Path;
-//use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct Vertex {
@@ -41,41 +41,6 @@ impl Default for Vertex {
             weights_1: Vector4::new(0.0, 0.0, 0.0, 0.0),
             weights_2: Vector4::new(0.0, 0.0, 0.0, 0.0),
             weights_3: Vector4::new(0.0, 0.0, 0.0, 0.0),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Dimensions {
-    pub min: Vector3,
-    pub max: Vector3,
-    pub size: Vector3,
-    pub center: Vector3,
-    pub radius: f32,
-}
-
-impl Default for Dimensions {
-    fn default() -> Dimensions {
-        use std::f32;
-        Dimensions {
-            min: Vector3::new(f32::MAX, f32::MAX, f32::MAX),
-            max: Vector3::new(f32::MIN, f32::MIN, f32::MIN),
-            size: Vector3::new(0.0, 0.0, 0.0),
-            center: Vector3::new(0.0, 0.0, 0.0),
-            radius: 0.0,
-        }
-    }
-}
-
-impl Dimensions {
-    pub fn new(min: Vector3, max: Vector3) -> Dimensions {
-        let distance = (max - min).norm();
-        Dimensions {
-            min,
-            max,
-            size: max - min,
-            center: (min + max) / 2.0,
-            radius: distance / 2.0,
         }
     }
 }
@@ -119,7 +84,7 @@ impl GltfPrimitive {
         _model: &mut GltfModel,
         data: &GltfData,
         _path: &Path,
-    ) -> GltfPrimitive {
+    ) -> Result<GltfPrimitive> {
         use std::f32;
 
         let buffers = &data.buffers;
@@ -141,15 +106,26 @@ impl GltfPrimitive {
             });
 
         /*let positions = reader
-            .read_positions()
-            .map(|positions| match faces {
-                Some(ref faces) => {
-                    let vertices = positions.collect::<Vec<_>>();
-                    faces.iter().map(|i| vertices[*i]).collect::<Vec<_>>()
-                }
-                None => positions.collect(),
-            })
-            //.ok_or(error::Error::MissingPositions)?;*/
+        .read_positions()
+        .map(|positions| match faces {
+            Some(ref faces) => {
+                let vertices = positions.collect::<Vec<_>>();
+                faces.iter().map(|i| vertices[*i]).collect::<Vec<_>>()
+            }
+            None => positions.collect(),
+        })?;*/
+        //.ok_or(Error::from("primitive is missing position information"))?;
+
+        /*let positions = reader
+        .read_positions()
+        .map(|positions| match faces {
+            Some(ref faces) => {
+                let vertices = positions.collect::<Vec<_>>();
+                faces.iter().map(|i| vertices[*i]).collect::<Vec<_>>()
+            }
+            None => positions.collect(),
+        })
+        //.ok_or(error::Error::MissingPositions)?;*/
         let positions = {
             let iter = reader.read_positions().unwrap_or_else(|| {
                 panic!(
@@ -251,18 +227,18 @@ impl GltfPrimitive {
             );
         }*/
         /*let tangents = reader
-            .read_tangents()
-            .map(|tangents| match faces {
-                Some(ref faces) => {
-                    let tangents = tangents.collect::<Vec<_>>();
-                    faces
-                        .iter()
-                        .map(|i| [tangents[*i][0], tangents[*i][1], tangents[*i][2]])
-                        .collect()
-                }
-                None => tangents.map(|t| [t[0], t[1], t[2]]).collect(),
-            })
-            .unwrap_or_else(|| calculate_tangents(&positions, &normals, &tex_coord));*/
+        .read_tangents()
+        .map(|tangents| match faces {
+            Some(ref faces) => {
+                let tangents = tangents.collect::<Vec<_>>();
+                faces
+                    .iter()
+                    .map(|i| [tangents[*i][0], tangents[*i][1], tangents[*i][2]])
+                    .collect()
+            }
+            None => tangents.map(|t| [t[0], t[1], t[2]]).collect(),
+        })
+        .unwrap_or_else(|| calculate_tangents(&positions, &normals, &tex_coord));*/
 
         /*fn iterate_slices_counted_2<T>(xs: &[T], ys: &[T]) {
             let len = cmp::min(xs.len(), ys.len());
@@ -351,12 +327,12 @@ impl GltfPrimitive {
 
         //shader_flags |= material.shader_flags();
 
-        GltfPrimitive::new(
+        Ok(GltfPrimitive::new(
             mode,
             Dimensions::new(pos_min, pos_max),
             &vertices,
             indices,
             primitive_ref.material().index(),
-        )
+        ))
     }
 }

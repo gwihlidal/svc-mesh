@@ -2,6 +2,7 @@ use crate::GltfData;
 use crate::GltfIndex;
 //use crate::GltfModel;
 use crate::GltfTexture;
+use crate::Result;
 use crate::Vector3;
 use crate::Vector4;
 use std::path::Path;
@@ -40,7 +41,7 @@ impl GltfMaterial {
         material_ref: &gltf::material::Material<'_>,
         _data: &GltfData,
         _path: &Path,
-    ) -> GltfMaterial {
+    ) -> Result<GltfMaterial> {
         //use crate::texture::load_texture;
 
         // TODO: Simplify this expansion (too verbose)
@@ -169,6 +170,6 @@ impl GltfMaterial {
             ));
         }*/
 
-        material
+        Ok(material)
     }
 }

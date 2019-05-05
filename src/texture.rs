@@ -3,6 +3,7 @@ use crate::GltfIndex;
 //use crate::GltfModel;
 //use crate::Vector3;
 //use crate::Vector4;
+use crate::Result;
 use std::path::Path;
 
 #[derive(Debug)]
@@ -21,7 +22,7 @@ impl GltfTexture {
         texture_ref: &gltf::Texture<'_>,
         data: &GltfData,
         _base_path: &Path,
-    ) -> GltfTexture {
+    ) -> Result<GltfTexture> {
         let _buffers = &data.buffers;
         let _image_ref = texture_ref.source();
 
@@ -31,11 +32,11 @@ impl GltfTexture {
             None
         };
 
-        GltfTexture {
+        Ok(GltfTexture {
             index: texture_ref.index(),
             name: texture_name,
             sampler: GltfSampler {},
-        }
+        })
     }
 }
 

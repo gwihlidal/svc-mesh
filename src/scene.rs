@@ -1,7 +1,8 @@
-use super::math::*;
-use super::Dimensions;
-use super::GltfIndex;
-use super::GltfModel;
+use crate::math::*;
+use crate::Dimensions;
+use crate::GltfIndex;
+use crate::GltfModel;
+use crate::Result;
 
 #[derive(Debug)]
 pub struct GltfScene {
@@ -21,7 +22,7 @@ impl Default for GltfScene {
 }
 
 impl GltfScene {
-    pub fn from_gltf(scene_ref: &gltf::Scene<'_>, model: &mut GltfModel) -> GltfScene {
+    pub fn from_gltf(scene_ref: &gltf::Scene<'_>, model: &mut GltfModel) -> Result<GltfScene> {
         let mut scene = GltfScene {
             name: scene_ref.name().map(|s| s.to_owned()),
             ..Default::default()
@@ -43,6 +44,6 @@ impl GltfScene {
             }
         }
         scene.dimensions = Dimensions::new(min, max);
-        scene
+        Ok(scene)
     }
 }

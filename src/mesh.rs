@@ -4,6 +4,7 @@ use super::GltfModel;
 use crate::GltfIndex;
 use crate::GltfPrimitive;
 //use collision::{Aabb, Union};
+use crate::Result;
 use std::path::Path;
 use std::rc::Rc;
 
@@ -21,8 +22,8 @@ impl GltfMesh {
         model: &mut GltfModel,
         data: &GltfData,
         base_path: &Path,
-    ) -> Rc<GltfMesh> {
-        let primitives: Vec<GltfPrimitive> = mesh_ref
+    ) -> Result<Rc<GltfMesh>> {
+        let primitives: Result<Vec<GltfPrimitive>> = mesh_ref
             .primitives()
             .enumerate()
             .map(|(i, prim_ref)| {
@@ -34,11 +35,11 @@ impl GltfMesh {
         .iter()
         .fold(Aabb3::zero(), |bounds, prim| prim.bounds.union(&bounds));*/
 
-        Rc::new(GltfMesh {
+        Ok(Rc::new(GltfMesh {
             index: mesh_ref.index(),
-            primitives,
+            primitives: primitives?,
             name: mesh_ref.name().map(|s| s.into()),
             //bounds,
-        })
+        }))
     }
 }

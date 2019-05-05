@@ -7,6 +7,7 @@ use crate::GltfNode;
 use crate::GltfNodeRef;
 use crate::GltfSkin;
 use crate::GltfTexture;
+use crate::Result;
 use crate::Vector3;
 use std::path::Path;
 use std::rc::Rc;
@@ -25,29 +26,29 @@ pub struct GltfModel {
 }
 
 impl GltfModel {
-    pub fn from_gltf(data: &GltfData, path: &Path) -> Self {
+    pub fn from_gltf(data: &GltfData, path: &Path) -> Result<Self> {
         let mut model = GltfModel::default();
 
         // Load textures
         model.textures = data
             .document
             .textures()
-            .map(|texture_ref| Rc::new(GltfTexture::from_gltf(&texture_ref, data, path)))
-            .collect();
+            .map(|texture_ref| Ok(Rc::new(GltfTexture::from_gltf(&texture_ref, data, path)?)))
+            .collect::<Result<_>>()?;
 
         // Load materials
         model.materials = data
             .document
             .materials()
-            .map(|material_ref| Rc::new(GltfMaterial::from_gltf(&material_ref, data, path)))
-            .collect();
+            .map(|material_ref| Ok(Rc::new(GltfMaterial::from_gltf(&material_ref, data, path)?)))
+            .collect::<Result<_>>()?;
 
         // Load nodes
         model.nodes = data
             .document
             .nodes()
             .map(|node_ref| GltfNode::from_gltf(None, &node_ref, &mut model, data, path))
-            .collect();
+            .collect::<Result<_>>()?;
 
         // Load cameras
         /*root.camera_nodes = root.nodes.iter()
@@ -76,7 +77,7 @@ impl GltfModel {
         // Finalize
         model.merge_skins();
         model.compute_dimensions();
-        model
+        Ok(model)
     }
 
     fn merge_skins(&mut self) {
