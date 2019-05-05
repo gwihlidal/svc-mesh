@@ -1,6 +1,6 @@
 use super::GltfData;
 use super::GltfModel;
-use crate::math::*;
+//use crate::math::*;
 use crate::GltfIndex;
 use crate::GltfPrimitive;
 //use collision::{Aabb, Union};

@@ -2,7 +2,7 @@
 use std::boxed::Box;
 use std::error::Error as StdError;
 use std::path::Path;
-use std::rc::Rc;
+//use std::rc::Rc;
 
 mod animation;
 mod data;
@@ -18,7 +18,7 @@ mod texture;
 
 use animation::*;
 use data::*;
-use format::*;
+//use format::*;
 use material::*;
 use math::*;
 use mesh::*;

@@ -1,6 +1,6 @@
 use crate::GltfData;
 use crate::GltfIndex;
-use crate::GltfModel;
+//use crate::GltfModel;
 use crate::GltfTexture;
 use crate::Vector3;
 use crate::Vector4;

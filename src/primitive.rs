@@ -1,11 +1,11 @@
 use super::math::*;
 use super::GltfData;
 use super::GltfIndex;
-use super::GltfMaterial;
+//use super::GltfMaterial;
 use super::GltfModel;
 use log::{debug, warn};
 use std::path::Path;
-use std::rc::Rc;
+//use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct Vertex {

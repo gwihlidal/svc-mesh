@@ -2,7 +2,7 @@ use super::GltfData;
 use super::GltfIndex;
 use super::GltfMesh;
 use super::GltfModel;
-use crate::{Matrix4, Quaternion, Unit, UnitQuaternion, Vector3, Vector4};
+use crate::{Matrix4, Quaternion, Unit, UnitQuaternion, Vector3 /*, Vector4*/};
 use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
@@ -129,8 +129,8 @@ impl GltfNode {
             //println!("Local Matrix2: {:?}", matrix);
             self.get_matrix_chain(next_parent, &matrix)
 
-            //let matrix = self.get_matrix_chain(next_parent, &current_matrix);
-            //parent.borrow().local_matrix() * matrix
+        //let matrix = self.get_matrix_chain(next_parent, &current_matrix);
+        //parent.borrow().local_matrix() * matrix
         } else {
             current_matrix.clone()
         }
