@@ -6,13 +6,33 @@ edition = "2018"
 
 [dependencies]
 meshopt = "0.1.6"
-serde_json = "1.0.39"
 num-traits = "0.2.6"
 mikktspace = "0.1.1"
 nalgebra = "0.18.0"
 log = "0.4.6"
 image = "0.21.1"
 base64 = "0.10.1"
+failure = "0.1.5"
+h2 = "0.1.18"
+tokio = "0.1"
+tower-grpc = { git = "https://github.com/tower-rs/tower-grpc" }
+tower-h2 = { git = "https://github.com/tower-rs/tower-h2" }
+tower-http = { git = "https://github.com/tower-rs/tower-http" }
+tower-util = { git = "https://github.com/tower-rs/tower" }
+tower-request-modifier = { git = "https://github.com/tower-rs/tower-http" }
+tower-service = "0.2"
+futures = "0.1.26"
+futures-cpupool = "0.1.8"
+bytes = "0.4.12"
+prost = "0.5.0"
+prost-derive = "0.5.0"
+prost-types = "0.5.0"
+flatbuffers = "0.6.0"
+elapsed = "0.1.2"
+serde = "1.0"
+serde_yaml = "0.8.9"
+serde_json = "1.0.39"
+toml = "0.5.0"
 
 [dependencies.gltf]
 version = "0.11"
