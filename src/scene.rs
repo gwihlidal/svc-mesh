@@ -1,11 +1,13 @@
 use super::math::*;
+use super::Dimensions;
+use super::GltfIndex;
 use super::GltfModel;
 
 #[derive(Debug)]
 pub struct GltfScene {
     pub name: Option<String>,
-    pub nodes: Vec<usize>,
-    //pub bounds: Aabb3,
+    pub nodes: Vec<GltfIndex>,
+    pub dimensions: Dimensions,
 }
 
 impl Default for GltfScene {
@@ -13,13 +15,13 @@ impl Default for GltfScene {
         Self {
             name: None,
             nodes: vec![],
-            //bounds: Aabb3::new(Point3::new(0.0, 0.0, 0.0), Point3::new(0.0, 0.0, 0.0)),
+            dimensions: Default::default(),
         }
     }
 }
 
 impl GltfScene {
-    pub fn from_gltf(scene_ref: &gltf::Scene<'_>, _model: &mut GltfModel) -> GltfScene {
+    pub fn from_gltf(scene_ref: &gltf::Scene<'_>, model: &mut GltfModel) -> GltfScene {
         let mut scene = GltfScene {
             name: scene_ref.name().map(|s| s.to_owned()),
             ..Default::default()
@@ -27,15 +29,20 @@ impl GltfScene {
 
         scene.nodes = scene_ref.nodes().map(|node_ref| node_ref.index()).collect();
 
-        // propagate transforms
-        //let root_transform = Matrix4::identity();
-        for _node_index in &scene.nodes {
-            //let _node = model.unsafe_get_node_mut(*node_index);
-            //node.update_transform(root, &root_transform);
-            //node.update_bounds(root);
-            //scene.bounds = scene.bounds.union(&node.bounds);
+        let mut min = Vector3::new(std::f32::MAX, std::f32::MAX, std::f32::MAX);
+        let mut max = Vector3::new(std::f32::MIN, std::f32::MIN, std::f32::MIN);
+        for node_index in &scene.nodes {
+            let node_ref = model
+                .nodes
+                .iter()
+                .find(|&node_ref| node_ref.borrow().node_index == *node_index);
+            if let Some(ref node_ref) = node_ref {
+                node_ref
+                    .borrow()
+                    .compute_dimensions(model, &mut min, &mut max);
+            }
         }
-
+        scene.dimensions = Dimensions::new(min, max);
         scene
     }
 }

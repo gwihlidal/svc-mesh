@@ -134,13 +134,13 @@ impl GltfPrimitive {
             iter.collect::<Vec<_>>()
         };
 
-        let bounds = primitive_ref.bounding_box();
+        //let bounds = primitive_ref.bounding_box();
         /*let bounds = Aabb3 {
             min: bounds.min.into(),
             max: bounds.max.into(),
         };*/
 
-        println!("Bounds: {:?}", bounds);
+        //println!("Bounds: {:?}", bounds);
 
         let mut pos_min: Vector3 = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
         let mut pos_max: Vector3 = Vector3::new(f32::MIN, f32::MIN, f32::MIN);
@@ -166,9 +166,9 @@ impl GltfPrimitive {
             })
             .collect();
 
-        println!("Vertex Count: {}", vertices.len());
+        //println!("Vertex Count: {}", vertices.len());
 
-        println!("Min: {:?}, Max: {:?}", pos_min, pos_max);
+        //println!("Min: {:?}, Max: {:?}", pos_min, pos_max);
 
         //let mut shader_flags = ShaderFlags::empty();
 

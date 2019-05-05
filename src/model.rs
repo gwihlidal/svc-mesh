@@ -76,13 +76,8 @@ impl GltfModel {
         // Finalize
         model.merge_skins();
         model.compute_dimensions();
-        println!("Dimensions: {:?}", model.dimensions);
         model
     }
-
-    /*pub fn unsafe_get_node_mut(&mut self, index: usize) -> &'static mut Rc<GltfNode> {
-        unsafe { &mut *(&mut self.nodes[index] as *mut Rc<GltfNode>) }
-    }*/
 
     fn merge_skins(&mut self) {
         // A gltf model can contain multiple meshes with multiple primitives (or "parts").

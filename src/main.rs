@@ -69,31 +69,8 @@ fn load_model(model_path: &Path) -> Result<(), Box<StdError>> {
     println!("Scene count: {}", scene_count);
 
     let gltf_scene = data.document.scenes().nth(scene_index).unwrap();
-    let _scene = GltfScene::from_gltf(&gltf_scene, &mut model);
-
-    //println!("Scene: {:?} - {:?}", scene, gltf_scene);
-
-    /*
-    if gltf.animations().len() > 0 {
-    //load_animations();
-    }
-
-    //load_skins();
-
-    // A gltf model can contain multiple meshes with multiple primitives (or "parts").
-    // We already merge these into a single MeshAsset with multiple parts, so we also need to merge the skins here.
-    //merge_skins();
-
-    //for node in linear_nodes {
-    // Assign skins
-    //if (node->skinIndex > -1)
-    //{
-    //    node->skin = skins[node->skinIndex];
-    //}
-    //}
-
-    //let dimensions = calc_dimensions();
-     */
+    let scene = GltfScene::from_gltf(&gltf_scene, &mut model);
+    println!("Scene Dimensions: {:?}", scene.dimensions);
     Ok(())
 }
 
@@ -110,12 +87,12 @@ fn main() {
     //display(&"data/RiggedFigure.glb").expect("runtime error");
 
     //println!("Model 1");
-    //load_model(&Path::new("data/Floor_Junk_Cluster_01.glb")).expect("runtime error");
-    //load_model(&"data/Combat_Helmet.glb").expect("runtime error");
+    load_model(&Path::new("data/Floor_Junk_Cluster_01.glb")).expect("runtime error");
+    //load_model(&Path::new("data/Combat_Helmet.glb")).expect("runtime error");
     //println!("Model 2");
     //load_model(&Path::new("data/SciFiHelmet.gltf")).expect("runtime error");
     //load_model(&Path::new("data/EpicCitadel.glb")).expect("runtime error");
     //load_model(&Path::new("data/BoxAnimated.glb")).expect("runtime error");
-    load_model(&Path::new("data/RiggedFigure.glb")).expect("runtime error");
+    //load_model(&Path::new("data/RiggedFigure.glb")).expect("runtime error");
     println!("Done");
 }

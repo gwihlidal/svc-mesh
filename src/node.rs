@@ -101,7 +101,7 @@ impl GltfNode {
         //let rotation = UnitQuaternion::new_unchecked(*self.rotation).to_homogeneous();
         //println!("Local Rotation1: {:?}", self.rotation);
         let rotation = self.rotation.to_homogeneous();
-        //println!("Local Rotation2: {:?}", rotation);
+        //println!("Local Rotation: {:?}", rotation);
         let scale = Matrix4::new_nonuniform_scaling(&self.scale);
         //println!("Local Scale: {:?}", scale);
         translation * rotation * scale
@@ -109,9 +109,9 @@ impl GltfNode {
 
     pub fn get_matrix(&self) -> Matrix4 {
         let local_matrix = self.local_matrix();
-        println!("Local Matrix: {:?}", local_matrix);
+        //println!("Local Matrix: {:?}", local_matrix);
         let chained_matrix = self.get_matrix_chain(self.parent.clone(), &local_matrix);
-        println!("Chained Matrix: {:?}", chained_matrix);
+        //println!("Chained Matrix: {:?}", chained_matrix);
         chained_matrix
     }
 
@@ -123,11 +123,14 @@ impl GltfNode {
         if let Some(parent) = parent_ref {
             let next_parent = parent.borrow().parent.clone();
 
-            let matrix = parent.borrow().local_matrix() * current_matrix;
+            let matrix = parent.borrow().local_matrix();
+            //println!("Local Matrix: {:?}", matrix);
+            let matrix = matrix * current_matrix;
+            //println!("Local Matrix2: {:?}", matrix);
             self.get_matrix_chain(next_parent, &matrix)
 
-        //let matrix = self.get_matrix_chain(next_parent, &current_matrix);
-        //parent.borrow().local_matrix() * matrix
+            //let matrix = self.get_matrix_chain(next_parent, &current_matrix);
+            //parent.borrow().local_matrix() * matrix
         } else {
             current_matrix.clone()
         }
@@ -136,27 +139,29 @@ impl GltfNode {
     pub fn compute_dimensions(&self, model: &GltfModel, min: &mut Vector3, max: &mut Vector3) {
         if let Some(ref mesh) = self.mesh {
             let node_matrix = self.get_matrix();
-
             for primitive in &mesh.primitives {
-                //let loc_min = Vector4::new(primitive.dimensions.min.x, primitive.dimensions.min.y, primitive.dimensions.min.z, 1.0);
-                //let loc_max = Vector4::new(primitive.dimensions.max.x, primitive.dimensions.max.y, primitive.dimensions.max.z, 1.0);
+                //println!("Min: {:?}, Max: {:?}", &primitive.dimensions.min, &primitive.dimensions.max);
 
                 //println!("Node Matrix: {:?}", node_matrix);
                 let loc_min = node_matrix.transform_vector(&primitive.dimensions.min);
                 let loc_max = node_matrix.transform_vector(&primitive.dimensions.max);
 
-                min.x = min.x.min(loc_min.x);
-                min.y = min.y.min(loc_min.y);
-                min.z = min.z.min(loc_min.z);
+                //println!("LocMin: {:?}, LocMax: {:?}", &loc_min, &loc_max);
 
-                max.x = max.x.max(loc_max.x);
-                max.y = max.y.max(loc_max.y);
-                max.z = max.z.max(loc_max.z);
+                min.x = loc_min.x.min(min.x);
+                min.y = loc_min.y.min(min.y);
+                min.z = loc_min.z.min(min.z);
+
+                max.x = loc_max.x.max(max.x);
+                max.y = loc_max.y.max(max.y);
+                max.z = loc_max.z.max(max.z);
+
+                //println!("min[{}, {}, {}], max[{}, {}, {}]", min.x, min.y, min.z, max.x, max.y, max.z);
             }
         }
 
         for child_node in &self.children {
-            child_node.borrow_mut().compute_dimensions(model, min, max);
+            child_node.borrow().compute_dimensions(model, min, max);
         }
     }
 }
