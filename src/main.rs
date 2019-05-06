@@ -73,11 +73,18 @@ fn load_model(model_path: &Path) -> Result<()> {
         //process::exit(3)
         panic!("scene index is too high");
     }
-    println!("Scene count: {}", scene_count);
+    //println!("Scene count: {}", scene_count);
 
     let gltf_scene = data.document.scenes().nth(scene_index).unwrap();
     let scene = GltfScene::from_gltf(&gltf_scene, &mut model)?;
     println!("Scene Dimensions: {:?}", scene.dimensions);
+
+    let _has_animations = model.animations.len() > 0;
+
+    // Protect against shared triangle vertices being transformed multiple times
+    //let mut transformed: Vec<bool> = vec![false; model.vertex_buffer.len()];
+
+
     Ok(())
 }
 
