@@ -1,61 +1,54 @@
-use super::math::*;
-use super::GltfData;
-use super::GltfIndex;
-//use super::GltfMaterial;
-use super::GltfModel;
+use crate::calculate_tangents;
+use crate::math::*;
+use crate::GltfData;
+use crate::GltfIndex;
 use crate::Result;
-use log::{debug, warn};
-use std::path::Path;
-
-#[derive(Debug, Clone)]
-pub struct Vertex {
-    pub position: Vector3,
-    pub normal: Vector3,
-    pub tangent: Vector4,
-    pub tex_coord_0: Vector2,
-    pub color_0: Vector4,
-
-    pub joints_0: [u16; 4],
-    pub joints_1: [u16; 4],
-    pub joints_2: [u16; 4],
-    pub joints_3: [u16; 4],
-    pub weights_0: Vector4,
-    pub weights_1: Vector4,
-    pub weights_2: Vector4,
-    pub weights_3: Vector4,
-}
-
-impl Default for Vertex {
-    fn default() -> Self {
-        Vertex {
-            position: Vector3::new(0.0, 0.0, 0.0),
-            normal: Vector3::new(0.0, 0.0, 0.0),
-            tangent: Vector4::new(0.0, 0.0, 0.0, 0.0),
-            tex_coord_0: Vector2::new(0.0, 0.0),
-            color_0: Vector4::new(0.0, 0.0, 0.0, 0.0),
-            joints_0: [0; 4],
-            joints_1: [0; 4],
-            joints_2: [0; 4],
-            joints_3: [0; 4],
-            weights_0: Vector4::new(0.0, 0.0, 0.0, 0.0),
-            weights_1: Vector4::new(0.0, 0.0, 0.0, 0.0),
-            weights_2: Vector4::new(0.0, 0.0, 0.0, 0.0),
-            weights_3: Vector4::new(0.0, 0.0, 0.0, 0.0),
-        }
-    }
-}
 
 #[derive(Debug)]
 pub struct GltfPrimitive {
     pub mode: gltf::mesh::Mode,
-    pub material: Option<GltfIndex>,
-    pub vertices: Vec<Vertex>,
-    pub indices: Vec<u32>,
+    pub mesh_index: GltfIndex,
+    pub primitive_index: GltfIndex,
+    pub material_index: Option<GltfIndex>,
     pub dimensions: Dimensions,
+
+    pub faces: Option<Vec<usize>>,
+
+    pub positions: Vec<[f32; 3]>,
+    pub normals: Vec<[f32; 3]>,
+    pub tangents: Vec<[f32; 3]>,
+
+    pub color0: Option<Vec<[f32; 4]>>,
+    //pub color1: Option<Vec<[f32; 4]>>,
+    //pub color2: Option<Vec<[f32; 4]>>,
+    //pub color3: Option<Vec<[f32; 4]>>,
+    pub uv0: Vec<[f32; 2]>,
+    //pub uv1: Option<Vec<[f32; 2]>>,
+    //pub uv2: Option<Vec<[f32; 2]>>,
+    //pub uv3: Option<Vec<[f32; 2]>>,
+    pub joints0: Option<Vec<[u16; 4]>>,
+    pub joints1: Option<Vec<[u16; 4]>>,
+    pub joints2: Option<Vec<[u16; 4]>>,
+    pub joints3: Option<Vec<[u16; 4]>>,
+
+    pub weights0: Option<Vec<[f32; 4]>>,
+    pub weights1: Option<Vec<[f32; 4]>>,
+    pub weights2: Option<Vec<[f32; 4]>>,
+    pub weights3: Option<Vec<[f32; 4]>>,
 }
 
+/*fn iterate_slices_counted_2<T>(xs: &[T], ys: &[T]) {
+    let len = cmp::min(xs.len(), ys.len());
+    let xs = &xs[..len];
+    let ys = &ys[..len];
+    for i in 0..len {
+        let x = &xs[i];
+        let y = &ys[i];
+    }
+}*/
+
 impl GltfPrimitive {
-    pub fn new(
+    /*pub fn new(
         mode: gltf::mesh::Mode,
         dimensions: Dimensions,
         vertices: &[Vertex],
@@ -75,20 +68,24 @@ impl GltfPrimitive {
             indices,
             dimensions,
         }
-    }
+    }*/
 
     pub fn from_gltf(
         primitive_ref: &gltf::Primitive<'_>,
-        primitive_index: usize,
-        mesh_index: usize,
-        _model: &mut GltfModel,
+        primitive_index: GltfIndex,
+        mesh_index: GltfIndex,
         data: &GltfData,
-        _path: &Path,
     ) -> Result<GltfPrimitive> {
         use std::f32;
 
         let buffers = &data.buffers;
         let reader = primitive_ref.reader(|buffer| Some(&buffers[buffer.index()]));
+
+        // Indices / Faces
+
+        //let indices = reader
+        //    .read_indices()
+        //    .map(|read_indices| read_indices.into_u32().collect::<Vec<_>>());
 
         let faces = reader
             .read_indices()
@@ -105,28 +102,20 @@ impl GltfPrimitive {
                 faces
             });
 
-        /*let positions = reader
-        .read_positions()
-        .map(|positions| match faces {
-            Some(ref faces) => {
-                let vertices = positions.collect::<Vec<_>>();
-                faces.iter().map(|i| vertices[*i]).collect::<Vec<_>>()
-            }
-            None => positions.collect(),
-        })?;*/
-        //.ok_or(Error::from("primitive is missing position information"))?;
+        // Positions
 
-        /*let positions = reader
-        .read_positions()
-        .map(|positions| match faces {
-            Some(ref faces) => {
-                let vertices = positions.collect::<Vec<_>>();
-                faces.iter().map(|i| vertices[*i]).collect::<Vec<_>>()
-            }
-            None => positions.collect(),
-        })
-        //.ok_or(error::Error::MissingPositions)?;*/
-        let positions = {
+        let positions = reader
+            .read_positions()
+            .map(|positions| match faces {
+                Some(ref faces) => {
+                    let vertices = positions.collect::<Vec<_>>();
+                    faces.iter().map(|i| vertices[*i]).collect::<Vec<_>>()
+                }
+                None => positions.collect(),
+            })
+            .unwrap_or_default(); // ok_or
+
+        /*let positions = {
             let iter = reader.read_positions().unwrap_or_else(|| {
                 panic!(
                     "primitives must have the POSITION attribute (mesh: {}, primitive: {})",
@@ -134,173 +123,198 @@ impl GltfPrimitive {
                 )
             });
             iter.collect::<Vec<_>>()
-        };
-
-        //let bounds = primitive_ref.bounding_box();
-        /*let bounds = Aabb3 {
-            min: bounds.min.into(),
-            max: bounds.max.into(),
         };*/
 
-        //println!("Bounds: {:?}", bounds);
+        // Normals
 
-        let mut pos_min: Vector3 = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
-        let mut pos_max: Vector3 = Vector3::new(f32::MIN, f32::MIN, f32::MIN);
-
-        let mut vertices: Vec<Vertex> = positions
-            .into_iter()
-            .map(|position| {
-                let v = Vertex {
-                    position: Vector3::from(position),
-                    ..Vertex::default()
-                };
-                pos_min = Vector3::new(
-                    pos_min.x.min(v.position.x),
-                    pos_min.y.min(v.position.y),
-                    pos_min.z.min(v.position.z),
-                );
-                pos_max = Vector3::new(
-                    pos_max.x.max(v.position.x),
-                    pos_max.y.max(v.position.y),
-                    pos_max.z.max(v.position.z),
-                );
-                v
+        let normals = reader
+            .read_normals()
+            .map(|normals| match faces {
+                Some(ref faces) => {
+                    let normals = normals.collect::<Vec<_>>();
+                    faces.iter().map(|i| normals[*i]).collect()
+                }
+                None => normals.collect(),
             })
-            .collect();
+            .unwrap_or_else(|| {
+                use std::iter::once;
+                let f = faces
+                    .as_ref()
+                    .map(|f| f.clone())
+                    .unwrap_or_else(|| (0..positions.len()).collect::<Vec<_>>());
+                f.chunks(3)
+                    .flat_map(|chunk| {
+                        let a = Vector3::from(positions[chunk[0]]);
+                        let ab = Vector3::from(positions[chunk[1]]) - a;
+                        let ac = Vector3::from(positions[chunk[2]]) - a;
+                        let normal: [f32; 3] = ab.cross(&ac).into();
+                        once(normal.clone())
+                            .chain(once(normal.clone()))
+                            .chain(once(normal))
+                    })
+                    .collect::<Vec<_>>()
+            });
 
-        //println!("Vertex Count: {}", vertices.len());
+        // Texture Coordinates
 
-        //println!("Min: {:?}, Max: {:?}", pos_min, pos_max);
+        let uv0 = reader
+            .read_tex_coords(0)
+            .map(|tex_coords| tex_coords.into_f32().collect::<Vec<[f32; 2]>>())
+            .unwrap_or_else(|| {
+                vec![
+                    [
+                        data.options.generate_tex_coords.0,
+                        data.options.generate_tex_coords.1
+                    ];
+                    positions.len()
+                ]
+            });
+        let uv0: Vec<[f32; 2]> = match faces {
+            Some(ref faces) => faces
+                .iter()
+                .map(|i| flip_check(uv0[*i], data.options.flip_v_coord))
+                .collect(),
+            None => uv0
+                .into_iter()
+                .map(|t| flip_check(t, data.options.flip_v_coord))
+                .collect(),
+        };
 
-        //let mut shader_flags = ShaderFlags::empty();
+        // TODO: uv1, uv2, uv3, ...
 
-        // normals
-        if let Some(normals) = reader.read_normals() {
-            for (i, normal) in normals.enumerate() {
-                vertices[i].normal = Vector3::from(normal);
-            }
-        //shader_flags |= ShaderFlags::HAS_NORMALS;
+        // Tangents
+
+        let tangents = if data.options.regenerate_tangents {
+            calculate_tangents(&positions, &normals, &uv0)
         } else {
-            debug!(
-                "Found no NORMALs for primitive {} of mesh {} \
-                 (flat normal calculation not implemented yet)",
-                primitive_index, mesh_index
-            );
-        }
+            reader
+                .read_tangents()
+                .map(|tangents| match faces {
+                    Some(ref faces) => {
+                        let tangents = tangents.collect::<Vec<_>>();
+                        faces
+                            .iter()
+                            .map(|i| [tangents[*i][0], tangents[*i][1], tangents[*i][2]])
+                            .collect()
+                    }
+                    None => tangents.map(|t| [t[0], t[1], t[2]]).collect(),
+                })
+                .unwrap_or_else(|| calculate_tangents(&positions, &normals, &uv0))
+        };
 
-        // texture coordinates
-        if let Some(tex_coords) = reader.read_tex_coords(0) {
-            for (i, tex_coord) in tex_coords.into_f32().enumerate() {
-                vertices[i].tex_coord_0 = Vector2::from(tex_coord);
-            }
-            //shader_flags |= ShaderFlags::HAS_UV;
-        }
-        if reader.read_tex_coords(1).is_some() {
-            warn!("Ignoring further tex coord attributes, only supporting TEXCOORD_0. (mesh: {}, primitive: {})",
-                mesh_index, primitive_index);
-        }
+        // Vertex Colors
 
-        // colors
-        if let Some(colors) = reader.read_colors(0) {
-            let colors = colors.into_rgba_f32();
-            for (i, c) in colors.enumerate() {
-                vertices[i].color_0 = c.into();
-            }
-            //shader_flags |= ShaderFlags::HAS_COLORS;
-        }
-        if reader.read_colors(1).is_some() {
-            warn!("Ignoring further color attributes, only supporting COLOR_0. (mesh: {}, primitive: {})",
-                mesh_index, primitive_index);
-        }
-
-        // tangents
-        /*if let Some(tangents) = reader.read_tangents() {
-            for (i, tangent) in tangents.enumerate() {
-                vertices[i].tangent = Vector4::from(tangent);
-            }
-        //shader_flags |= ShaderFlags::HAS_TANGENTS;
-        } else {
-            debug!(
-                "Found no TANGENTS for primitive {} of mesh {} \
-                 (tangent calculation not implemented yet)",
-                primitive_index, mesh_index
-            );
-        }*/
-        /*let tangents = reader
-        .read_tangents()
-        .map(|tangents| match faces {
-            Some(ref faces) => {
-                let tangents = tangents.collect::<Vec<_>>();
-                faces
-                    .iter()
-                    .map(|i| [tangents[*i][0], tangents[*i][1], tangents[*i][2]])
-                    .collect()
-            }
-            None => tangents.map(|t| [t[0], t[1], t[2]]).collect(),
-        })
-        .unwrap_or_else(|| calculate_tangents(&positions, &normals, &tex_coord));*/
-
-        /*fn iterate_slices_counted_2<T>(xs: &[T], ys: &[T]) {
-            let len = cmp::min(xs.len(), ys.len());
-            let xs = &xs[..len];
-            let ys = &ys[..len];
-            for i in 0..len {
-                let x = &xs[i];
-                let y = &ys[i];
-            }
-        }*/
-
-        let mut joint_set = 0;
-        while let Some(joints) = reader.read_joints(joint_set) {
-            if joint_set > 3 {
-                warn!(
-                    "Ignoring joint set {}, \
-                     only supporting 4 joints at the moment. (mesh: {}, primitive: {})",
-                    joint_set, mesh_index, primitive_index
-                );
-                joint_set += 1;
-                continue;
-            }
-            for (i, joint) in joints.into_u16().enumerate() {
-                match joint_set {
-                    0 => vertices[i].joints_0 = joint,
-                    1 => vertices[i].joints_1 = joint,
-                    2 => vertices[i].joints_2 = joint,
-                    3 => vertices[i].joints_3 = joint,
-                    _ => unreachable!(),
+        let color0 = reader
+            .read_colors(0)
+            .map(|colors| colors.into_rgba_f32())
+            .map(|colors| match faces {
+                Some(ref faces) => {
+                    let colors = colors.collect::<Vec<_>>();
+                    faces.iter().map(|i| colors[*i]).collect()
                 }
-            }
-            //shader_flags |= ShaderFlags::HAS_UV;
-            joint_set += 1;
-        }
+                None => colors.collect(),
+            });
 
-        let mut weight_set = 0;
-        while let Some(weights) = reader.read_weights(weight_set) {
-            if weight_set > 3 {
-                warn!(
-                    "Ignoring weight set {}, \
-                     only supporting 4 weights at the moment. (mesh: {}, primitive: {})",
-                    weight_set, mesh_index, primitive_index
-                );
-                weight_set += 1;
-                continue;
-            }
-            for (i, weights) in weights.into_f32().enumerate() {
-                match weight_set {
-                    0 => vertices[i].weights_0 = weights.into(),
-                    1 => vertices[i].weights_1 = weights.into(),
-                    2 => vertices[i].weights_2 = weights.into(),
-                    3 => vertices[i].weights_3 = weights.into(),
-                    _ => unreachable!(),
+        // Skinning Joints
+
+        let joints0 =
+            reader
+                .read_joints(0)
+                .map(|joints| joints.into_u16())
+                .map(|joints| match faces {
+                    Some(ref faces) => {
+                        let joints = joints.collect::<Vec<_>>();
+                        faces.iter().map(|i| joints[*i]).collect()
+                    }
+                    None => joints.collect(),
+                });
+
+        let joints1 =
+            reader
+                .read_joints(1)
+                .map(|joints| joints.into_u16())
+                .map(|joints| match faces {
+                    Some(ref faces) => {
+                        let joints = joints.collect::<Vec<_>>();
+                        faces.iter().map(|i| joints[*i]).collect()
+                    }
+                    None => joints.collect(),
+                });
+
+        let joints2 =
+            reader
+                .read_joints(2)
+                .map(|joints| joints.into_u16())
+                .map(|joints| match faces {
+                    Some(ref faces) => {
+                        let joints = joints.collect::<Vec<_>>();
+                        faces.iter().map(|i| joints[*i]).collect()
+                    }
+                    None => joints.collect(),
+                });
+
+        let joints3 =
+            reader
+                .read_joints(3)
+                .map(|joints| joints.into_u16())
+                .map(|joints| match faces {
+                    Some(ref faces) => {
+                        let joints = joints.collect::<Vec<_>>();
+                        faces.iter().map(|i| joints[*i]).collect()
+                    }
+                    None => joints.collect(),
+                });
+
+        // Skinning Weights
+
+        let weights0 = reader
+            .read_weights(0)
+            .map(|weights| weights.into_f32())
+            .map(|weights| match faces {
+                Some(ref faces) => {
+                    let weights = weights.collect::<Vec<_>>();
+                    faces.iter().map(|i| weights[*i]).collect()
                 }
-            }
-            //shader_flags |= ShaderFlags::HAS_UV;
-            weight_set += 1;
-        }
+                None => weights.collect(),
+            });
 
-        let indices = reader
-            .read_indices()
-            .map(|read_indices| read_indices.into_u32().collect::<Vec<_>>());
+        let weights1 = reader
+            .read_weights(1)
+            .map(|weights| weights.into_f32())
+            .map(|weights| match faces {
+                Some(ref faces) => {
+                    let weights = weights.collect::<Vec<_>>();
+                    faces.iter().map(|i| weights[*i]).collect()
+                }
+                None => weights.collect(),
+            });
+
+        let weights2 = reader
+            .read_weights(2)
+            .map(|weights| weights.into_f32())
+            .map(|weights| match faces {
+                Some(ref faces) => {
+                    let weights = weights.collect::<Vec<_>>();
+                    faces.iter().map(|i| weights[*i]).collect()
+                }
+                None => weights.collect(),
+            });
+
+        let weights3 = reader
+            .read_weights(3)
+            .map(|weights| weights.into_f32())
+            .map(|weights| match faces {
+                Some(ref faces) => {
+                    let weights = weights.collect::<Vec<_>>();
+                    faces.iter().map(|i| weights[*i]).collect()
+                }
+                None => weights.collect(),
+            });
+
+        // Bounding Dimensions and Meta Data
+
+        let bounds = primitive_ref.bounding_box();
+        let dimensions = Dimensions::new(bounds.min.into(), bounds.max.into());
 
         let mode = primitive_ref.mode();
         match mode {
@@ -325,14 +339,28 @@ impl GltfPrimitive {
             }
         }
 
-        //shader_flags |= material.shader_flags();
+        let material_index = primitive_ref.material().index();
 
-        Ok(GltfPrimitive::new(
+        Ok(GltfPrimitive {
             mode,
-            Dimensions::new(pos_min, pos_max),
-            &vertices,
-            indices,
-            primitive_ref.material().index(),
-        ))
+            primitive_index,
+            mesh_index,
+            material_index,
+            dimensions,
+            faces,
+            positions,
+            normals,
+            tangents,
+            color0,
+            uv0,
+            joints0,
+            joints1,
+            joints2,
+            joints3,
+            weights0,
+            weights1,
+            weights2,
+            weights3,
+        })
     }
 }

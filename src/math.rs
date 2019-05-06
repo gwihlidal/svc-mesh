@@ -45,3 +45,11 @@ impl Dimensions {
         }
     }
 }
+
+pub fn flip_check(uv: [f32; 2], flip_v: bool) -> [f32; 2] {
+    if flip_v {
+        [uv[0], 1. - uv[1]]
+    } else {
+        uv
+    }
+}

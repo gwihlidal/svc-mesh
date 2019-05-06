@@ -2,6 +2,7 @@
 #![allow(unused_variables)]
 
 //use crate::StdError;
+use crate::GltfOptions;
 use crate::Result;
 use std::path::Path;
 use std::{fs, io};
@@ -39,6 +40,7 @@ impl MaterialFlags {
 
 #[derive(Debug)]
 pub struct GltfData {
+    pub options: GltfOptions,
     pub document: gltf::Document,
     pub buffers: Vec<gltf::buffer::Data>,
     pub images: Vec<gltf::image::Data>,

@@ -1,12 +1,9 @@
 use crate::GltfData;
 use crate::GltfIndex;
-//use crate::GltfModel;
-use crate::GltfTexture;
 use crate::Result;
 use crate::Vector3;
 use crate::Vector4;
 use std::path::Path;
-use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct GltfMaterial {
@@ -17,18 +14,20 @@ pub struct GltfMaterial {
 
     // pbr_metallic_roughness properties
     pub base_color_factor: Vector4,
-    pub base_color_texture: Option<Rc<GltfTexture>>,
+    pub base_color_texture: Option<(GltfIndex, u32 /* uv set */)>,
+
     pub metallic_factor: f32,
     pub roughness_factor: f32,
-    pub metallic_roughness_texture: Option<Rc<GltfTexture>>,
+    pub metallic_roughness_texture: Option<(GltfIndex, u32 /* uv set */)>,
 
-    pub normal_texture: Option<Rc<GltfTexture>>,
     pub normal_scale: Option<f32>,
+    pub normal_texture: Option<(GltfIndex, u32 /* uv set */)>,
 
-    pub occlusion_texture: Option<Rc<GltfTexture>>,
-    pub occlusion_strength: f32,
+    pub occlusion_strength: Option<f32>,
+    pub occlusion_texture: Option<(GltfIndex, u32 /* uv set */)>,
+
     pub emissive_factor: Vector3,
-    pub emissive_texture: Option<Rc<GltfTexture>>,
+    pub emissive_texture: Option<(GltfIndex, u32 /* uv set */)>,
 
     pub alpha_cutoff: f32,
     pub alpha_mode: gltf::material::AlphaMode,
@@ -42,8 +41,6 @@ impl GltfMaterial {
         _data: &GltfData,
         _path: &Path,
     ) -> Result<GltfMaterial> {
-        //use crate::texture::load_texture;
-
         // TODO: Simplify this expansion (too verbose)
         // TODO: Make this generic
         let material_uri = if let Some(ref extras) = material_ref.extras() {
@@ -74,7 +71,7 @@ impl GltfMaterial {
 
         let pbr = material_ref.pbr_metallic_roughness();
 
-        let material = GltfMaterial {
+        let mut material = GltfMaterial {
             index: material_ref.index(), // None is returned if it's the default material
             name: material_ref.name().map(|s| s.into()),
             material_uri,
@@ -91,7 +88,7 @@ impl GltfMaterial {
             normal_scale: None,
 
             occlusion_texture: None,
-            occlusion_strength: 0.0,
+            occlusion_strength: None,
 
             emissive_factor: material_ref.emissive_factor().into(),
             emissive_texture: None,
@@ -117,58 +114,31 @@ impl GltfMaterial {
             }
         }*/
 
-        /*if let Some(color_info) = pbr.base_color_texture() {
-            material.base_color_texture = Some(load_texture(
-                &"BaseColor",
-                &color_info.texture(),
-                color_info.tex_coord(),
-                model,
-                data,
-                path,
-            ));
+        if let Some(color_info) = pbr.base_color_texture() {
+            material.base_color_texture =
+                Some((color_info.texture().index(), color_info.tex_coord()));
         }
+
         if let Some(mr_info) = pbr.metallic_roughness_texture() {
-            material.metallic_roughness_texture = Some(load_texture(
-                &"MetallicRoughness",
-                &mr_info.texture(),
-                mr_info.tex_coord(),
-                model,
-                data,
-                path,
-            ));
+            material.metallic_roughness_texture =
+                Some((mr_info.texture().index(), mr_info.tex_coord()));
         }
+
         if let Some(normal_texture) = material_ref.normal_texture() {
-            material.normal_texture = Some(load_texture(
-                &"Normal",
-                &normal_texture.texture(),
-                normal_texture.tex_coord(),
-                model,
-                data,
-                path,
-            ));
+            material.normal_texture =
+                Some((normal_texture.texture().index(), normal_texture.tex_coord()));
             material.normal_scale = Some(normal_texture.scale());
         }
+
         if let Some(occ_texture) = material_ref.occlusion_texture() {
-            material.occlusion_texture = Some(load_texture(
-                &"Occlusion",
-                &occ_texture.texture(),
-                occ_texture.tex_coord(),
-                model,
-                data,
-                path,
-            ));
-            material.occlusion_strength = occ_texture.strength();
+            material.occlusion_texture =
+                Some((occ_texture.texture().index(), occ_texture.tex_coord()));
+            material.occlusion_strength = Some(occ_texture.strength());
         }
+
         if let Some(em_info) = material_ref.emissive_texture() {
-            material.emissive_texture = Some(load_texture(
-                &"Emissive",
-                &em_info.texture(),
-                em_info.tex_coord(),
-                model,
-                data,
-                path,
-            ));
-        }*/
+            material.emissive_texture = Some((em_info.texture().index(), em_info.tex_coord()));
+        }
 
         Ok(material)
     }

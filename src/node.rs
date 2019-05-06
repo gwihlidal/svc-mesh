@@ -57,7 +57,7 @@ impl GltfNode {
             }
 
             if mesh.is_none() {
-                mesh = Some(GltfMesh::from_gltf(&mesh_ref, model, data, base_path)?);
+                mesh = Some(GltfMesh::from_gltf(&mesh_ref, data)?);
                 model.meshes.push(mesh.clone().unwrap());
             }
         }

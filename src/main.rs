@@ -30,6 +30,15 @@ use scene::*;
 use tangents::*;
 use texture::*;
 
+#[derive(Debug, Clone, Default)]
+pub struct GltfOptions {
+    pub scene_index: Option<usize>,
+    pub load_animations: bool,
+    pub regenerate_tangents: bool,
+    pub generate_tex_coords: (f32, f32),
+    pub flip_v_coord: bool,
+}
+
 fn load_model(model_path: &Path) -> Result<()> {
     let _base_path = model_path.parent().unwrap_or(Path::new("./"));
     //let gltf_data = read_to_end(model_path)?;
@@ -43,7 +52,13 @@ fn load_model(model_path: &Path) -> Result<()> {
         model.materials.push(Rc::clone(&mat));
     }*/
 
+    let options = GltfOptions {
+        regenerate_tangents: true,
+        ..Default::default()
+    };
+
     let data = GltfData {
+        options,
         document,
         buffers,
         images,
