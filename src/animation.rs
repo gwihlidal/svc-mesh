@@ -175,7 +175,9 @@ pub fn load_skin(
 
 #[derive(Debug)]
 pub struct GltfAnimationSampler {
+    pub interpolation_type : GltfInterpolationType,
     pub inputs: Vec<f32>,
+    pub outputs : Vec<Vector4>,
 }
 
 impl GltfAnimationSampler {
@@ -234,7 +236,10 @@ impl GltfAnimationSampler {
             _ => unimplemented!(),
         };
 
-        GltfAnimationSampler { inputs }
+        GltfAnimationSampler {  interpolation_type : interpolation, 
+                                inputs,
+                                outputs,
+                             }
     }
 }
 
@@ -288,6 +293,10 @@ impl GltfAnimation {
                 end = end.max(*input);
             }
         }
+
+        // for sampler in &samplers {
+        //     println!("Samplers {:?}",sampler);
+        // }
 
         let channels = animation_ref
             .channels()
