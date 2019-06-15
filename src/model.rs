@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::Dimensions;
 use crate::GltfAnimation;
 use crate::GltfData;
@@ -26,6 +28,26 @@ pub struct GltfModel {
 }
 
 impl GltfModel {
+
+    pub fn walk_nodes(_node: &GltfNodeRef, indent: String) {
+        
+        let mut name = "".to_string();
+        if let Some(name_ref) = &_node.borrow().name {
+            name = name_ref.clone();
+        }
+        
+        println!("{}node_index:{} node_str:{} children:{}",
+            indent,
+            _node.borrow().node_index.to_string(),
+            name,
+             _node.borrow().children.len().to_string());
+        
+        let child_indent = indent + " ";
+        for node in _node.borrow().children.iter() {    
+            GltfModel::walk_nodes(&node, child_indent.clone());
+        }
+    }
+
     pub fn from_gltf(data: &GltfData, path: &Path) -> Result<Self> {
         let mut model = GltfModel::default();
 
@@ -44,11 +66,18 @@ impl GltfModel {
             .collect::<Result<_>>()?;
 
         // Load nodes
-        model.nodes = data
-            .document
+        for scene in data.document.scenes() {
+            let mut nodev : Vec<GltfNodeRef>  = scene
             .nodes()
             .map(|node_ref| GltfNode::from_gltf(None, &node_ref, &mut model, data, path))
             .collect::<Result<_>>()?;
+            model.nodes.append(&mut nodev);
+        }
+
+        // Print Nodes
+        // for node in model.nodes.iter() {
+        //     GltfModel::walk_nodes(&node, "".to_string());
+        // }
 
         // Load cameras
         /*root.camera_nodes = root.nodes.iter()
