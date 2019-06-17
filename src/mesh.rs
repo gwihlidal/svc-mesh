@@ -1,5 +1,6 @@
 use super::GltfData;
 use crate::GltfIndex;
+use crate::GltfModel;
 use crate::GltfPrimitive;
 use crate::Result;
 use std::rc::Rc;
@@ -13,11 +14,17 @@ pub struct GltfMesh {
 }
 
 impl GltfMesh {
-    pub fn from_gltf(mesh_ref: &gltf::Mesh<'_>, data: &GltfData) -> Result<Rc<GltfMesh>> {
+    pub fn from_gltf(
+        mesh_ref: &gltf::Mesh<'_>,
+        model: &mut GltfModel,
+        data: &GltfData,
+    ) -> Result<Rc<GltfMesh>> {
         let primitives: Vec<GltfPrimitive> = mesh_ref
             .primitives()
             .enumerate()
-            .map(|(i, prim_ref)| GltfPrimitive::from_gltf(&prim_ref, i, mesh_ref.index(), data))
+            .map(|(i, prim_ref)| {
+                GltfPrimitive::from_gltf(&prim_ref, i, mesh_ref.index(), model, data)
+            })
             .collect::<Result<_>>()?;
 
         /*

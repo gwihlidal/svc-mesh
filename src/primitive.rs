@@ -2,6 +2,8 @@ use crate::calculate_tangents;
 use crate::math::*;
 use crate::GltfData;
 use crate::GltfIndex;
+use crate::GltfModel;
+use crate::GltfVertex;
 use crate::Result;
 
 #[derive(Debug)]
@@ -74,6 +76,7 @@ impl GltfPrimitive {
         primitive_ref: &gltf::Primitive<'_>,
         primitive_index: GltfIndex,
         mesh_index: GltfIndex,
+        model: &mut GltfModel,
         data: &GltfData,
     ) -> Result<GltfPrimitive> {
         use std::f32;
@@ -340,6 +343,100 @@ impl GltfPrimitive {
         }
 
         let material_index = primitive_ref.material().index();
+
+        let index_start = model.index_buffer.len();
+        let vertex_start = model.vertex_buffer.len();
+
+        let vertex_count = positions.len();
+        for i in 0..vertex_count {
+            let color0: [f32; 4] = if let Some(ref color0) = color0 {
+                let color0: &Vec<[f32; 4]> = &color0;
+                color0[i]
+            } else {
+                [0.0, 0.0, 0.0, 1.0]
+            };
+
+            let mut influence_count = 0;
+
+            let joint0: [u16; 4] = if let Some(ref joints0) = joints0 {
+                influence_count += 4;
+                let joint0: &Vec<[u16; 4]> = &joints0;
+                joint0[i]
+            } else {
+                [0, 0, 0, 0]
+            };
+
+            let joint1: [u16; 4] = if let Some(ref joints1) = joints1 {
+                influence_count += 4;
+                let joint1: &Vec<[u16; 4]> = &joints1;
+                joint1[i]
+            } else {
+                [0, 0, 0, 0]
+            };
+
+            let joint2: [u16; 4] = if let Some(ref joints2) = joints2 {
+                influence_count += 4;
+                let joint2: &Vec<[u16; 4]> = &joints2;
+                joint2[i]
+            } else {
+                [0, 0, 0, 0]
+            };
+
+            let joint3: [u16; 4] = if let Some(ref joints3) = joints3 {
+                influence_count += 4;
+                let joint3: &Vec<[u16; 4]> = &joints3;
+                joint3[i]
+            } else {
+                [0, 0, 0, 0]
+            };
+
+            let weight0: [f32; 4] = if let Some(ref weights0) = weights0 {
+                let weight0: &Vec<[f32; 4]> = &weights0;
+                weight0[i]
+            } else {
+                [0.0, 0.0, 0.0, 0.0]
+            };
+
+            let weight1: [f32; 4] = if let Some(ref weights1) = weights1 {
+                let weight1: &Vec<[f32; 4]> = &weights1;
+                weight1[i]
+            } else {
+                [0.0, 0.0, 0.0, 0.0]
+            };
+
+            let weight2: [f32; 4] = if let Some(ref weights2) = weights2 {
+                let weight2: &Vec<[f32; 4]> = &weights2;
+                weight2[i]
+            } else {
+                [0.0, 0.0, 0.0, 0.0]
+            };
+
+            let weight3: [f32; 4] = if let Some(ref weights3) = weights3 {
+                let weight3: &Vec<[f32; 4]> = &weights3;
+                weight3[i]
+            } else {
+                [0.0, 0.0, 0.0, 0.0]
+            };
+
+            let vertex = GltfVertex {
+                position: positions[i],
+                normal: normals[i],
+                uv0: uv0[i],
+                color0,
+                joint0,
+                joint1,
+                joint2,
+                joint3,
+                weight0,
+                weight1,
+                weight2,
+                weight3,
+                influence_count,
+                skin_index: -1,
+                bitangent: [0.0, 0.0, 0.0], // TODO
+                tangent: [0.0, 0.0, 0.0],   // TODO
+            };
+        }
 
         Ok(GltfPrimitive {
             mode,

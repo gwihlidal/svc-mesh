@@ -175,9 +175,9 @@ pub fn load_skin(
 
 #[derive(Debug)]
 pub struct GltfAnimationSampler {
-    pub interpolation_type : GltfInterpolationType,
+    pub interpolation_type: GltfInterpolationType,
     pub inputs: Vec<f32>,
-    pub outputs : Vec<Vector4>,
+    pub outputs: Vec<Vector4>,
 }
 
 impl GltfAnimationSampler {
@@ -236,10 +236,11 @@ impl GltfAnimationSampler {
             _ => unimplemented!(),
         };
 
-        GltfAnimationSampler {  interpolation_type : interpolation, 
-                                inputs,
-                                outputs,
-                             }
+        GltfAnimationSampler {
+            interpolation_type: interpolation,
+            inputs,
+            outputs,
+        }
     }
 }
 

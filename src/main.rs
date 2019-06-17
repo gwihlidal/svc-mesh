@@ -84,7 +84,6 @@ fn load_model(model_path: &Path) -> Result<()> {
     // Protect against shared triangle vertices being transformed multiple times
     //let mut transformed: Vec<bool> = vec![false; model.vertex_buffer.len()];
 
-
     Ok(())
 }
 

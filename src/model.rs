@@ -14,6 +14,29 @@ use crate::Vector3;
 use std::path::Path;
 use std::rc::Rc;
 
+#[repr(C)]
+#[derive(Debug)]
+pub struct GltfVertex {
+    pub position: [f32; 3],
+    pub normal: [f32; 3],
+    pub uv0: [f32; 2],
+    pub color0: [f32; 4],
+    pub joint0: [u16; 4],
+    pub joint1: [u16; 4],
+    pub joint2: [u16; 4],
+    pub joint3: [u16; 4],
+    pub weight0: [f32; 4],
+    pub weight1: [f32; 4],
+    pub weight2: [f32; 4],
+    pub weight3: [f32; 4],
+
+    pub tangent: [f32; 3],
+    pub bitangent: [f32; 3],
+
+    pub influence_count: u32,
+    pub skin_index: i32,
+}
+
 #[derive(Default, Debug)]
 pub struct GltfModel {
     pub nodes: Vec<GltfNodeRef>,
@@ -25,25 +48,28 @@ pub struct GltfModel {
     pub skins: Vec<Rc<GltfSkin>>,
 
     pub dimensions: Dimensions,
+
+    pub index_buffer: Vec<u32>,
+    pub vertex_buffer: Vec<GltfVertex>,
 }
 
 impl GltfModel {
-
     pub fn walk_nodes(_node: &GltfNodeRef, indent: String) {
-        
         let mut name = "".to_string();
         if let Some(name_ref) = &_node.borrow().name {
             name = name_ref.clone();
         }
-        
-        println!("{}node_index:{} node_str:{} children:{}",
+
+        println!(
+            "{}node_index:{} node_str:{} children:{}",
             indent,
             _node.borrow().node_index.to_string(),
             name,
-             _node.borrow().children.len().to_string());
-        
+            _node.borrow().children.len().to_string()
+        );
+
         let child_indent = indent + " ";
-        for node in _node.borrow().children.iter() {    
+        for node in _node.borrow().children.iter() {
             GltfModel::walk_nodes(&node, child_indent.clone());
         }
     }
@@ -67,10 +93,10 @@ impl GltfModel {
 
         // Load nodes
         for scene in data.document.scenes() {
-            let mut nodev : Vec<GltfNodeRef>  = scene
-            .nodes()
-            .map(|node_ref| GltfNode::from_gltf(None, &node_ref, &mut model, data, path))
-            .collect::<Result<_>>()?;
+            let mut nodev: Vec<GltfNodeRef> = scene
+                .nodes()
+                .map(|node_ref| GltfNode::from_gltf(None, &node_ref, &mut model, data, path))
+                .collect::<Result<_>>()?;
             model.nodes.append(&mut nodev);
         }
 
