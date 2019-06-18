@@ -9,34 +9,32 @@ use crate::Result;
 #[derive(Debug)]
 pub struct GltfPrimitive {
     pub mode: gltf::mesh::Mode,
+    pub dimensions: Dimensions,
     pub mesh_index: GltfIndex,
     pub primitive_index: GltfIndex,
     pub material_index: Option<GltfIndex>,
-    pub dimensions: Dimensions,
-
-    pub faces: Option<Vec<usize>>,
-
-    pub positions: Vec<[f32; 3]>,
-    pub normals: Vec<[f32; 3]>,
-    pub tangents: Vec<[f32; 3]>,
-
-    pub color0: Option<Vec<[f32; 4]>>,
+    pub index_start: u32,
+    pub index_count: u32,
+    //pub faces: Option<Vec<usize>>,
+    //pub positions: Vec<[f32; 3]>,
+    //pub normals: Vec<[f32; 3]>,
+    //pub tangents: Vec<[f32; 3]>,
+    //pub color0: Option<Vec<[f32; 4]>>,
     //pub color1: Option<Vec<[f32; 4]>>,
     //pub color2: Option<Vec<[f32; 4]>>,
     //pub color3: Option<Vec<[f32; 4]>>,
-    pub uv0: Vec<[f32; 2]>,
+    //pub uv0: Vec<[f32; 2]>,
     //pub uv1: Option<Vec<[f32; 2]>>,
     //pub uv2: Option<Vec<[f32; 2]>>,
     //pub uv3: Option<Vec<[f32; 2]>>,
-    pub joints0: Option<Vec<[u16; 4]>>,
-    pub joints1: Option<Vec<[u16; 4]>>,
-    pub joints2: Option<Vec<[u16; 4]>>,
-    pub joints3: Option<Vec<[u16; 4]>>,
-
-    pub weights0: Option<Vec<[f32; 4]>>,
-    pub weights1: Option<Vec<[f32; 4]>>,
-    pub weights2: Option<Vec<[f32; 4]>>,
-    pub weights3: Option<Vec<[f32; 4]>>,
+    //pub joints0: Option<Vec<[u16; 4]>>,
+    //pub joints1: Option<Vec<[u16; 4]>>,
+    //pub joints2: Option<Vec<[u16; 4]>>,
+    //pub joints3: Option<Vec<[u16; 4]>>,
+    //pub weights0: Option<Vec<[f32; 4]>>,
+    //pub weights1: Option<Vec<[f32; 4]>>,
+    //pub weights2: Option<Vec<[f32; 4]>>,
+    //pub weights3: Option<Vec<[f32; 4]>>,
 }
 
 /*fn iterate_slices_counted_2<T>(xs: &[T], ys: &[T]) {
@@ -50,32 +48,11 @@ pub struct GltfPrimitive {
 }*/
 
 impl GltfPrimitive {
-    /*pub fn new(
-        mode: gltf::mesh::Mode,
-        dimensions: Dimensions,
-        vertices: &[Vertex],
-        indices: Option<Vec<u32>>,
-        material: Option<GltfIndex>,
-    ) -> GltfPrimitive {
-        //let index_count = indices.as_ref().map(|i| i.len()).unwrap_or(0);
-        let indices = if let Some(ref indices) = indices {
-            indices.to_owned()
-        } else {
-            Vec::new()
-        };
-        GltfPrimitive {
-            mode,
-            material,
-            vertices: vertices.to_vec(),
-            indices,
-            dimensions,
-        }
-    }*/
-
     pub fn from_gltf(
         primitive_ref: &gltf::Primitive<'_>,
         primitive_index: GltfIndex,
         mesh_index: GltfIndex,
+        skin_ref: &Option<gltf::Skin<'_>>,
         model: &mut GltfModel,
         data: &GltfData,
     ) -> Result<GltfPrimitive> {
@@ -84,11 +61,12 @@ impl GltfPrimitive {
         let buffers = &data.buffers;
         let reader = primitive_ref.reader(|buffer| Some(&buffers[buffer.index()]));
 
-        // Indices / Faces
+        let index_start = model.index_buffer.len() as u32;
+        let vertex_start = model.vertex_buffer.len() as u32;
 
-        //let indices = reader
-        //    .read_indices()
-        //    .map(|read_indices| read_indices.into_u32().collect::<Vec<_>>());
+        let has_skin = skin_ref.is_some();
+
+        // Indices / Faces
 
         let faces = reader
             .read_indices()
@@ -101,9 +79,15 @@ impl GltfPrimitive {
                     faces.push(a as usize);
                     faces.push(b as usize);
                     faces.push(c as usize);
+
+                    model.index_buffer.push(a + vertex_start);
+                    model.index_buffer.push(b + vertex_start);
+                    model.index_buffer.push(c + vertex_start);
                 }
                 faces
             });
+
+        let index_count = model.index_buffer.len() as u32 - index_start;
 
         // Positions
 
@@ -351,9 +335,6 @@ impl GltfPrimitive {
 
         let material_index = primitive_ref.material().index();
 
-        let index_start = model.index_buffer.len();
-        let vertex_start = model.vertex_buffer.len();
-
         let vertex_count = positions.len();
         for i in 0..vertex_count {
             let color0: [f32; 4] = if let Some(ref color0) = color0 {
@@ -440,6 +421,7 @@ impl GltfPrimitive {
             //dbg!(sign_bit);
             //dbg!(bitangent);
 
+            model.vertex_buffer.push(GltfVertex {
                 position: positions[i],
                 normal,
                 uv0: uv0[i],
@@ -454,9 +436,9 @@ impl GltfPrimitive {
                 weight3,
                 influence_count,
                 skin_index: -1,
-                bitangent: [0.0, 0.0, 0.0], // TODO
-                tangent: [0.0, 0.0, 0.0],   // TODO
-            };
+                bitangent,
+                tangent,
+            });
         }
 
         Ok(GltfPrimitive {
@@ -464,21 +446,23 @@ impl GltfPrimitive {
             primitive_index,
             mesh_index,
             material_index,
+            index_start,
+            index_count,
             dimensions,
-            faces,
-            positions,
-            normals,
-            tangents,
-            color0,
-            uv0,
-            joints0,
-            joints1,
-            joints2,
-            joints3,
-            weights0,
-            weights1,
-            weights2,
-            weights3,
+            //faces,
+            //positions,
+            //normals,
+            //tangents,
+            //color0,
+            //uv0,
+            //joints0,
+            //joints1,
+            //joints2,
+            //joints3,
+            //weights0,
+            //weights1,
+            //weights2,
+            //weights3,
         })
     }
 }
