@@ -13,12 +13,14 @@ pub enum AlphaMode {
 
 pub const MAX_BONE_INFLUENCES: usize = 16;
 
+#[derive(Debug, Default)]
 pub struct SkinningData {
     pub bone_count: u32,
     pub weights: [f32; MAX_BONE_INFLUENCES],
     pub bone_ids: [u32; MAX_BONE_INFLUENCES],
 }
 
+#[derive(Debug, Default)]
 pub struct MeshData {
     pub skinning_data: Vec<SkinningData>,
     pub positions: Vec<Vector3>,
@@ -29,3 +31,6 @@ pub struct MeshData {
     pub colors: Vec<Vector4>,
     pub indices: Vec<u32>,
 }
+
+#[derive(Debug, Default)]
+pub struct MeshAsset {}

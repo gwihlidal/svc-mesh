@@ -46,6 +46,9 @@ impl GltfNode {
             rotation[2],
         ));
 
+        //node_ref: &gltf::Node<'_>,
+        let skin_ref = node_ref.skin();
+
         let mut mesh = None;
         if let Some(mesh_ref) = node_ref.mesh() {
             if let Some(existing_mesh) = model
@@ -57,7 +60,7 @@ impl GltfNode {
             }
 
             if mesh.is_none() {
-                mesh = Some(GltfMesh::from_gltf(&mesh_ref, model, data)?);
+                mesh = Some(GltfMesh::from_gltf(&mesh_ref, &skin_ref, model, data)?);
                 model.meshes.push(mesh.clone().unwrap());
             }
         }

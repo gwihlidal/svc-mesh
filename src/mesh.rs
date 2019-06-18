@@ -16,6 +16,7 @@ pub struct GltfMesh {
 impl GltfMesh {
     pub fn from_gltf(
         mesh_ref: &gltf::Mesh<'_>,
+        skin_ref: &Option<gltf::Skin<'_>>,
         model: &mut GltfModel,
         data: &GltfData,
     ) -> Result<Rc<GltfMesh>> {
@@ -23,7 +24,7 @@ impl GltfMesh {
             .primitives()
             .enumerate()
             .map(|(i, prim_ref)| {
-                GltfPrimitive::from_gltf(&prim_ref, i, mesh_ref.index(), model, data)
+                GltfPrimitive::from_gltf(&prim_ref, i, mesh_ref.index(), skin_ref, model, data)
             })
             .collect::<Result<_>>()?;
 
