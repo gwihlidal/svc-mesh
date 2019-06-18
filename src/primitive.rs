@@ -187,7 +187,7 @@ impl GltfPrimitive {
 
         // Tangents
 
-        let tangents = if data.options.regenerate_tangents {
+        let tangents: Vec<[f32; 4]> = if data.options.regenerate_tangents {
             calculate_tangents(&positions, &normals, &uv0)
         } else {
             reader
@@ -197,10 +197,17 @@ impl GltfPrimitive {
                         let tangents = tangents.collect::<Vec<_>>();
                         faces
                             .iter()
-                            .map(|i| [tangents[*i][0], tangents[*i][1], tangents[*i][2]])
+                            .map(|i| {
+                                [
+                                    tangents[*i][0],
+                                    tangents[*i][1],
+                                    tangents[*i][2],
+                                    tangents[*i][3],
+                                ]
+                            })
                             .collect()
                     }
-                    None => tangents.map(|t| [t[0], t[1], t[2]]).collect(),
+                    None => tangents.map(|t| [t[0], t[1], t[2], t[3]]).collect(),
                 })
                 .unwrap_or_else(|| calculate_tangents(&positions, &normals, &uv0))
         };
@@ -418,9 +425,23 @@ impl GltfPrimitive {
                 [0.0, 0.0, 0.0, 0.0]
             };
 
-            let vertex = GltfVertex {
+            let normal = normals[i];
+
+            let tangent = [tangents[i][0], tangents[i][1], tangents[i][2]];
+            let sign_bit = tangents[i][3];
+            let bitangent = {
+                let bitangent_x = (tangent[1] * normal[2] - tangent[2] * normal[1]) * sign_bit;
+                let bitangent_y = (tangent[2] * normal[0] - tangent[0] * normal[2]) * sign_bit;
+                let bitangent_z = (tangent[0] * normal[1] - tangent[1] * normal[0]) * sign_bit;
+                [bitangent_x, bitangent_y, bitangent_z]
+            };
+
+            //dbg!(tangent);
+            //dbg!(sign_bit);
+            //dbg!(bitangent);
+
                 position: positions[i],
-                normal: normals[i],
+                normal,
                 uv0: uv0[i],
                 color0,
                 joint0,

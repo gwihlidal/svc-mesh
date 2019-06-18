@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 meshopt = "0.1.6"
 num-traits = "0.2.6"
+#mikktspace = { git = "https://github.com/gltf-rs/mikktspace.git" }
 mikktspace = "0.1.1"
 nalgebra = "0.18.0"
 log = "0.4.6"

@@ -2,10 +2,10 @@ pub fn calculate_tangents(
     positions: &[[f32; 3]],
     normals: &[[f32; 3]],
     tex_coords: &[[f32; 2]],
-) -> Vec<[f32; 3]> {
+) -> Vec<[f32; 4]> {
     generate_tangents(positions, normals, tex_coords)
         .iter()
-        .map(|(_, t)| [t[0], t[1], t[2]])
+        .map(|(_, t)| [t[0], t[1], t[2], t[3]])
         .collect()
 }
 
