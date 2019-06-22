@@ -4,6 +4,8 @@
 //use crate::GltfBuffers;
 use crate::GltfData;
 use crate::GltfIndex;
+use crate::GltfModel;
+use crate::GltfNodeRef;
 use crate::Matrix4;
 use crate::Vector4;
 use std::collections::HashMap;
@@ -245,13 +247,17 @@ impl GltfAnimationSampler {
 }
 
 #[derive(Debug)]
-pub struct GltfAnimationChannel {}
-
-impl GltfAnimationChannel {
-    pub fn from_gltf(animation_ref: &gltf::animation::Channel<'_>) -> GltfAnimationChannel {
-        GltfAnimationChannel {}
-    }
+pub struct GltfAnimationChannel {
+    pub node_ref: GltfNodeRef,
+    pub rotation_sampler: Option<GltfAnimationSampler>,
+    pub translation_sampler: Option<GltfAnimationSampler>,
+    pub scale_sampler: Option<GltfAnimationSampler>,
 }
+
+// impl GltfAnimationChannel {
+//     pub fn from_gltf(channel_ref: &gltf::animation::Channel<'_>, animation_ref: &gltf::Animation<'_>, model: &GltfModel) -> Option<GltfAnimationChannel> {
+//     }
+// }
 
 #[derive(Debug)]
 pub struct GltfAnimation {
@@ -269,6 +275,7 @@ impl GltfAnimation {
         animation_ref: &gltf::Animation<'_>,
         data: &GltfData,
         _base_path: &Path,
+        model: &GltfModel,
     ) -> Rc<GltfAnimation> {
         use std::f32;
 
@@ -299,10 +306,43 @@ impl GltfAnimation {
         //     println!("Samplers {:?}",sampler);
         // }
 
-        let channels = animation_ref
-            .channels()
-            .map(|channel_ref| GltfAnimationChannel::from_gltf(&channel_ref))
-            .collect();
+        let mut channels: Vec<GltfAnimationChannel> = Vec::new();
+
+        // What we want to do here is create channels, and let them own the sampler data associated with the channel.
+        // Additionally, in our representation a single channel is associated with each node, with T, R and S transformations all owned by the same channel
+        for channel_ref in animation_ref.channels() {
+            // Find the node associated with the channel index
+            let node_ref = model.node_from_index(channel_ref.target().node().index());
+            match node_ref {
+                Some(x) =>  {
+                    // Find existing channel associated with the node, if it doesn't exist, create a new channel
+                    let target_channel : &mut GltfAnimationChannel = match channels.iter_mut().find(|channel_i| GltfNodeRef::ptr_eq(&channel_i.node_ref, &x)) {
+                        Some(y) => {
+                            y
+                        },
+                        None => {
+                            let new_channel = GltfAnimationChannel {
+                                node_ref : x,
+                                rotation_sampler: None,
+                                translation_sampler: None,
+                                scale_sampler: None,
+                            };
+                            channels.push(new_channel);
+                            channels.last_mut().unwrap()
+                        },
+                    };
+                    match channel_ref.target().property() {
+                        gltf::animation::Property::Translation => {target_channel.translation_sampler = Some(GltfAnimationSampler::from_gltf(&channel_ref.sampler(), data))},
+                        gltf::animation::Property::Rotation => {target_channel.rotation_sampler = Some(GltfAnimationSampler::from_gltf(&channel_ref.sampler(), data))},
+                        gltf::animation::Property::Scale => {target_channel.scale_sampler = Some(GltfAnimationSampler::from_gltf(&channel_ref.sampler(), data))},
+                        _ => println!("Unimplemented: Found morph target channel")
+                    }
+                },
+                None => {
+                    println!("No node found to match with channel.");
+                },
+            }
+        }
 
         let node_to_channel = HashMap::new();
         // TODO:

@@ -3,6 +3,7 @@
 use crate::Dimensions;
 use crate::GltfAnimation;
 use crate::GltfData;
+use super::GltfIndex;
 use crate::GltfMaterial;
 use crate::GltfMesh;
 use crate::GltfNode;
@@ -39,7 +40,8 @@ pub struct GltfVertex {
 
 #[derive(Default, Debug)]
 pub struct GltfModel {
-    pub nodes: Vec<GltfNodeRef>,
+    pub root_nodes: Vec<GltfNodeRef>, // root nodes
+    pub linear_nodes: Vec<GltfNodeRef>, // all nodes
 
     pub meshes: Vec<Rc<GltfMesh>>,
     pub textures: Vec<Rc<GltfTexture>>,
@@ -54,7 +56,7 @@ pub struct GltfModel {
 }
 
 impl GltfModel {
-    pub fn walk_nodes(_node: &GltfNodeRef, indent: String) {
+    pub fn print_nodes(_node: &GltfNodeRef, indent: String) {
         let mut name = "".to_string();
         if let Some(name_ref) = &_node.borrow().name {
             name = name_ref.clone();
@@ -70,7 +72,26 @@ impl GltfModel {
 
         let child_indent = indent + " ";
         for node in _node.borrow().children.iter() {
-            GltfModel::walk_nodes(&node, child_indent.clone());
+            GltfModel::print_nodes(&node, child_indent.clone());
+        }
+    }
+
+    pub fn node_from_index(&self, index: GltfIndex) -> Option<GltfNodeRef> {
+        let mut found_node = None;
+        if let Some(existing_node) = self
+            .linear_nodes
+            .iter()
+            .find(|node| (***node).borrow().node_index == index)
+        {
+            found_node = Some(Rc::clone(existing_node));
+        }
+        found_node
+    }
+
+    fn collect_nodes(&self, _node: &GltfNodeRef, res : &mut Vec<GltfNodeRef>) {
+        res.push(_node.clone());
+        for node in _node.borrow().children.iter() {    
+            self.collect_nodes(node, res);
         }
     }
 
@@ -97,12 +118,22 @@ impl GltfModel {
                 .nodes()
                 .map(|node_ref| GltfNode::from_gltf(None, &node_ref, &mut model, data, path))
                 .collect::<Result<_>>()?;
-            model.nodes.append(&mut nodev);
+            model.root_nodes.append(&mut nodev);
         }
 
+        let mut res_nodes : Vec<GltfNodeRef> = Vec::new();
+        for node in &model.root_nodes {
+            model.collect_nodes(node, &mut res_nodes);
+        }
+        model.linear_nodes.append(&mut res_nodes);     
+
         // Print Nodes
-        // for node in model.nodes.iter() {
-        //     GltfModel::walk_nodes(&node, "".to_string());
+        // for node in model.root_nodes.iter() {
+        //     GltfModel::print_nodes(&node, "".to_string());
+        // }
+
+        // for node in model.linear_nodes.iter() {
+        //      println!("Node: Children {}",node.borrow().children.len());
         // }
 
         // Load cameras
@@ -115,7 +146,7 @@ impl GltfModel {
         model.animations = data
             .document
             .animations()
-            .map(|animation_ref| GltfAnimation::from_gltf(&animation_ref, data, path))
+            .map(|animation_ref| GltfAnimation::from_gltf(&animation_ref, data, path, &model))
             .filter(|animation| {
                 // Only keep animations with valid channels
                 animation.channels.len() > 0
@@ -161,7 +192,7 @@ impl GltfModel {
         use std::f32;
         let mut min = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
         let mut max = Vector3::new(f32::MIN, f32::MIN, f32::MIN);
-        for node in &self.nodes {
+        for node in &self.linear_nodes {
             node.borrow().compute_dimensions(self, &mut min, &mut max);
         }
         self.dimensions = Dimensions::new(min, max);

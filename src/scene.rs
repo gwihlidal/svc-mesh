@@ -34,7 +34,7 @@ impl GltfScene {
         let mut max = Vector3::new(std::f32::MIN, std::f32::MIN, std::f32::MIN);
         for node_index in &scene.nodes {
             let node_ref = model
-                .nodes
+                .linear_nodes
                 .iter()
                 .find(|&node_ref| node_ref.borrow().node_index == *node_index);
             if let Some(ref node_ref) = node_ref {
