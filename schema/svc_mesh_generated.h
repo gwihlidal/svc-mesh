@@ -10,13 +10,417 @@ namespace service {
 namespace mesh {
 namespace schema {
 
+struct MeshStream;
+
+struct MeshMaterial;
+
+struct MeshPart;
+
 struct Mesh;
 
 struct Manifest;
 
-struct Mesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+enum StreamFormat {
+  StreamFormat_Invalid = 0,
+  StreamFormat_Float = 1,
+  StreamFormat_Vector4 = 2,
+  StreamFormat_Vector3 = 3,
+  StreamFormat_Vector2 = 4,
+  StreamFormat_Int = 5,
+  StreamFormat_Int3 = 6,
+  StreamFormat_MIN = StreamFormat_Invalid,
+  StreamFormat_MAX = StreamFormat_Int3
+};
+
+inline const StreamFormat (&EnumValuesStreamFormat())[7] {
+  static const StreamFormat values[] = {
+    StreamFormat_Invalid,
+    StreamFormat_Float,
+    StreamFormat_Vector4,
+    StreamFormat_Vector3,
+    StreamFormat_Vector2,
+    StreamFormat_Int,
+    StreamFormat_Int3
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesStreamFormat() {
+  static const char * const names[] = {
+    "Invalid",
+    "Float",
+    "Vector4",
+    "Vector3",
+    "Vector2",
+    "Int",
+    "Int3",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameStreamFormat(StreamFormat e) {
+  const size_t index = static_cast<int>(e);
+  return EnumNamesStreamFormat()[index];
+}
+
+enum StreamType {
+  StreamType_Positions = 0,
+  StreamType_Normals = 1,
+  StreamType_Tangents = 2,
+  StreamType_Bitangents = 3,
+  StreamType_TextureCoordinates = 4,
+  StreamType_Colors = 5,
+  StreamType_Indices = 6,
+  StreamType_MIN = StreamType_Positions,
+  StreamType_MAX = StreamType_Indices
+};
+
+inline const StreamType (&EnumValuesStreamType())[7] {
+  static const StreamType values[] = {
+    StreamType_Positions,
+    StreamType_Normals,
+    StreamType_Tangents,
+    StreamType_Bitangents,
+    StreamType_TextureCoordinates,
+    StreamType_Colors,
+    StreamType_Indices
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesStreamType() {
+  static const char * const names[] = {
+    "Positions",
+    "Normals",
+    "Tangents",
+    "Bitangents",
+    "TextureCoordinates",
+    "Colors",
+    "Indices",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameStreamType(StreamType e) {
+  const size_t index = static_cast<int>(e);
+  return EnumNamesStreamType()[index];
+}
+
+enum AnimationType {
+  AnimationType_None = 0,
+  AnimationType_Rigid = 1,
+  AnimationType_Skinned = 2,
+  AnimationType_MIN = AnimationType_None,
+  AnimationType_MAX = AnimationType_Skinned
+};
+
+inline const AnimationType (&EnumValuesAnimationType())[3] {
+  static const AnimationType values[] = {
+    AnimationType_None,
+    AnimationType_Rigid,
+    AnimationType_Skinned
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesAnimationType() {
+  static const char * const names[] = {
+    "None",
+    "Rigid",
+    "Skinned",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameAnimationType(AnimationType e) {
+  const size_t index = static_cast<int>(e);
+  return EnumNamesAnimationType()[index];
+}
+
+struct MeshStream FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_TYPE = 4,
+    VT_FORMAT = 6,
+    VT_ELEMENTS = 8,
+    VT_DATA = 10
+  };
+  StreamType type() const {
+    return static_cast<StreamType>(GetField<int8_t>(VT_TYPE, 0));
+  }
+  StreamFormat format() const {
+    return static_cast<StreamFormat>(GetField<int8_t>(VT_FORMAT, 0));
+  }
+  uint64_t elements() const {
+    return GetField<uint64_t>(VT_ELEMENTS, 0);
+  }
+  const flatbuffers::Vector<uint8_t> *data() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_DATA);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<int8_t>(verifier, VT_TYPE) &&
+           VerifyField<int8_t>(verifier, VT_FORMAT) &&
+           VerifyField<uint64_t>(verifier, VT_ELEMENTS) &&
+           VerifyOffset(verifier, VT_DATA) &&
+           verifier.VerifyVector(data()) &&
+           verifier.EndTable();
+  }
+};
+
+struct MeshStreamBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_type(StreamType type) {
+    fbb_.AddElement<int8_t>(MeshStream::VT_TYPE, static_cast<int8_t>(type), 0);
+  }
+  void add_format(StreamFormat format) {
+    fbb_.AddElement<int8_t>(MeshStream::VT_FORMAT, static_cast<int8_t>(format), 0);
+  }
+  void add_elements(uint64_t elements) {
+    fbb_.AddElement<uint64_t>(MeshStream::VT_ELEMENTS, elements, 0);
+  }
+  void add_data(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> data) {
+    fbb_.AddOffset(MeshStream::VT_DATA, data);
+  }
+  explicit MeshStreamBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  MeshStreamBuilder &operator=(const MeshStreamBuilder &);
+  flatbuffers::Offset<MeshStream> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<MeshStream>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<MeshStream> CreateMeshStream(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    StreamType type = StreamType_Positions,
+    StreamFormat format = StreamFormat_Invalid,
+    uint64_t elements = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> data = 0) {
+  MeshStreamBuilder builder_(_fbb);
+  builder_.add_elements(elements);
+  builder_.add_data(data);
+  builder_.add_format(format);
+  builder_.add_type(type);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<MeshStream> CreateMeshStreamDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    StreamType type = StreamType_Positions,
+    StreamFormat format = StreamFormat_Invalid,
+    uint64_t elements = 0,
+    const std::vector<uint8_t> *data = nullptr) {
+  return service::mesh::schema::CreateMeshStream(
+      _fbb,
+      type,
+      format,
+      elements,
+      data ? _fbb.CreateVector<uint8_t>(*data) : 0);
+}
+
+struct MeshMaterial FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_NAME = 4
+  };
+  const flatbuffers::String *name() const {
+    return GetPointer<const flatbuffers::String *>(VT_NAME);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_NAME) &&
+           verifier.VerifyString(name()) &&
+           verifier.EndTable();
+  }
+};
+
+struct MeshMaterialBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_name(flatbuffers::Offset<flatbuffers::String> name) {
+    fbb_.AddOffset(MeshMaterial::VT_NAME, name);
+  }
+  explicit MeshMaterialBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  MeshMaterialBuilder &operator=(const MeshMaterialBuilder &);
+  flatbuffers::Offset<MeshMaterial> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<MeshMaterial>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<MeshMaterial> CreateMeshMaterial(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> name = 0) {
+  MeshMaterialBuilder builder_(_fbb);
+  builder_.add_name(name);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<MeshMaterial> CreateMeshMaterialDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *name = nullptr) {
+  return service::mesh::schema::CreateMeshMaterial(
+      _fbb,
+      name ? _fbb.CreateString(name) : 0);
+}
+
+struct MeshPart FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_INDEX_START = 4,
+    VT_INDEX_COUNT = 6,
+    VT_MATERIAL_INDEX = 8,
+    VT_NODE_INDEX = 10,
+    VT_NAME = 12,
+    VT_ANIMATION_TYPE = 14
+  };
+  uint32_t index_start() const {
+    return GetField<uint32_t>(VT_INDEX_START, 0);
+  }
+  uint32_t index_count() const {
+    return GetField<uint32_t>(VT_INDEX_COUNT, 0);
+  }
+  int32_t material_index() const {
+    return GetField<int32_t>(VT_MATERIAL_INDEX, 0);
+  }
+  int32_t node_index() const {
+    return GetField<int32_t>(VT_NODE_INDEX, 0);
+  }
+  const flatbuffers::String *name() const {
+    return GetPointer<const flatbuffers::String *>(VT_NAME);
+  }
+  AnimationType animation_type() const {
+    return static_cast<AnimationType>(GetField<int8_t>(VT_ANIMATION_TYPE, 0));
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_INDEX_START) &&
+           VerifyField<uint32_t>(verifier, VT_INDEX_COUNT) &&
+           VerifyField<int32_t>(verifier, VT_MATERIAL_INDEX) &&
+           VerifyField<int32_t>(verifier, VT_NODE_INDEX) &&
+           VerifyOffset(verifier, VT_NAME) &&
+           verifier.VerifyString(name()) &&
+           VerifyField<int8_t>(verifier, VT_ANIMATION_TYPE) &&
+           verifier.EndTable();
+  }
+};
+
+struct MeshPartBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_index_start(uint32_t index_start) {
+    fbb_.AddElement<uint32_t>(MeshPart::VT_INDEX_START, index_start, 0);
+  }
+  void add_index_count(uint32_t index_count) {
+    fbb_.AddElement<uint32_t>(MeshPart::VT_INDEX_COUNT, index_count, 0);
+  }
+  void add_material_index(int32_t material_index) {
+    fbb_.AddElement<int32_t>(MeshPart::VT_MATERIAL_INDEX, material_index, 0);
+  }
+  void add_node_index(int32_t node_index) {
+    fbb_.AddElement<int32_t>(MeshPart::VT_NODE_INDEX, node_index, 0);
+  }
+  void add_name(flatbuffers::Offset<flatbuffers::String> name) {
+    fbb_.AddOffset(MeshPart::VT_NAME, name);
+  }
+  void add_animation_type(AnimationType animation_type) {
+    fbb_.AddElement<int8_t>(MeshPart::VT_ANIMATION_TYPE, static_cast<int8_t>(animation_type), 0);
+  }
+  explicit MeshPartBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  MeshPartBuilder &operator=(const MeshPartBuilder &);
+  flatbuffers::Offset<MeshPart> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<MeshPart>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<MeshPart> CreateMeshPart(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t index_start = 0,
+    uint32_t index_count = 0,
+    int32_t material_index = 0,
+    int32_t node_index = 0,
+    flatbuffers::Offset<flatbuffers::String> name = 0,
+    AnimationType animation_type = AnimationType_None) {
+  MeshPartBuilder builder_(_fbb);
+  builder_.add_name(name);
+  builder_.add_node_index(node_index);
+  builder_.add_material_index(material_index);
+  builder_.add_index_count(index_count);
+  builder_.add_index_start(index_start);
+  builder_.add_animation_type(animation_type);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<MeshPart> CreateMeshPartDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t index_start = 0,
+    uint32_t index_count = 0,
+    int32_t material_index = 0,
+    int32_t node_index = 0,
+    const char *name = nullptr,
+    AnimationType animation_type = AnimationType_None) {
+  return service::mesh::schema::CreateMeshPart(
+      _fbb,
+      index_start,
+      index_count,
+      material_index,
+      node_index,
+      name ? _fbb.CreateString(name) : 0,
+      animation_type);
+}
+
+struct Mesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_NAME = 4,
+    VT_IDENTITY = 6,
+    VT_PARTS = 8,
+    VT_MATERIALS = 10,
+    VT_STREAMS = 12
+  };
+  const flatbuffers::String *name() const {
+    return GetPointer<const flatbuffers::String *>(VT_NAME);
+  }
+  const flatbuffers::String *identity() const {
+    return GetPointer<const flatbuffers::String *>(VT_IDENTITY);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<MeshPart>> *parts() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<MeshPart>> *>(VT_PARTS);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<MeshMaterial>> *materials() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<MeshMaterial>> *>(VT_MATERIALS);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<MeshStream>> *streams() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<MeshStream>> *>(VT_STREAMS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_NAME) &&
+           verifier.VerifyString(name()) &&
+           VerifyOffset(verifier, VT_IDENTITY) &&
+           verifier.VerifyString(identity()) &&
+           VerifyOffset(verifier, VT_PARTS) &&
+           verifier.VerifyVector(parts()) &&
+           verifier.VerifyVectorOfTables(parts()) &&
+           VerifyOffset(verifier, VT_MATERIALS) &&
+           verifier.VerifyVector(materials()) &&
+           verifier.VerifyVectorOfTables(materials()) &&
+           VerifyOffset(verifier, VT_STREAMS) &&
+           verifier.VerifyVector(streams()) &&
+           verifier.VerifyVectorOfTables(streams()) &&
            verifier.EndTable();
   }
 };
@@ -24,6 +428,21 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 struct MeshBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
+  void add_name(flatbuffers::Offset<flatbuffers::String> name) {
+    fbb_.AddOffset(Mesh::VT_NAME, name);
+  }
+  void add_identity(flatbuffers::Offset<flatbuffers::String> identity) {
+    fbb_.AddOffset(Mesh::VT_IDENTITY, identity);
+  }
+  void add_parts(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<MeshPart>>> parts) {
+    fbb_.AddOffset(Mesh::VT_PARTS, parts);
+  }
+  void add_materials(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<MeshMaterial>>> materials) {
+    fbb_.AddOffset(Mesh::VT_MATERIALS, materials);
+  }
+  void add_streams(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<MeshStream>>> streams) {
+    fbb_.AddOffset(Mesh::VT_STREAMS, streams);
+  }
   explicit MeshBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -37,9 +456,35 @@ struct MeshBuilder {
 };
 
 inline flatbuffers::Offset<Mesh> CreateMesh(
-    flatbuffers::FlatBufferBuilder &_fbb) {
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> name = 0,
+    flatbuffers::Offset<flatbuffers::String> identity = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<MeshPart>>> parts = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<MeshMaterial>>> materials = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<MeshStream>>> streams = 0) {
   MeshBuilder builder_(_fbb);
+  builder_.add_streams(streams);
+  builder_.add_materials(materials);
+  builder_.add_parts(parts);
+  builder_.add_identity(identity);
+  builder_.add_name(name);
   return builder_.Finish();
+}
+
+inline flatbuffers::Offset<Mesh> CreateMeshDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *name = nullptr,
+    const char *identity = nullptr,
+    const std::vector<flatbuffers::Offset<MeshPart>> *parts = nullptr,
+    const std::vector<flatbuffers::Offset<MeshMaterial>> *materials = nullptr,
+    const std::vector<flatbuffers::Offset<MeshStream>> *streams = nullptr) {
+  return service::mesh::schema::CreateMesh(
+      _fbb,
+      name ? _fbb.CreateString(name) : 0,
+      identity ? _fbb.CreateString(identity) : 0,
+      parts ? _fbb.CreateVector<flatbuffers::Offset<MeshPart>>(*parts) : 0,
+      materials ? _fbb.CreateVector<flatbuffers::Offset<MeshMaterial>>(*materials) : 0,
+      streams ? _fbb.CreateVector<flatbuffers::Offset<MeshStream>>(*streams) : 0);
 }
 
 struct Manifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

@@ -5,7 +5,7 @@ authors = ["Graham Wihlidal <graham@wihlidal.ca>"]
 edition = "2018"
 
 [dependencies]
-meshopt = "0.1.6"
+meshopt = "0.1.7"
 num-traits = "0.2.8"
 #mikktspace = { git = "https://github.com/gltf-rs/mikktspace.git" }
 mikktspace = "0.1.1"

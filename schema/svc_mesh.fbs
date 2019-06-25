@@ -1,7 +1,75 @@
 namespace service.mesh.schema;
 
-table Mesh {
+enum StreamFormat:byte {
+    Invalid,
+    Float,
+    Vector4,
+    Vector3,
+    Vector2,
+    Int,
+    Int3,
+}
 
+enum StreamType:byte {
+    Positions,
+    Normals,
+    Tangents,
+    Bitangents,
+    TextureCoordinates,
+    Colors,
+    Indices,
+}
+
+enum AnimationType:byte {
+    None,
+    Rigid,
+    Skinned,
+}
+
+table MeshStream {
+    type:StreamType;
+    format:StreamFormat;
+    elements:uint64;
+    data:[ubyte];
+}
+
+table MeshMaterial {
+    name:string;
+    //AssetUrl albedoTextureAsset;
+    //AssetUrl normalTextureAsset;
+    //AssetUrl roughnessTextureAsset;
+    //AssetUrl metalnessTextureAsset;
+    //AssetUrl aoTextureAsset;
+    //AssetUrl emissiveTextureAsset;
+
+    //Vector3 albedoTint;
+    //float32 roughness;
+    //Vector2 uvScrollingSpeed;
+
+    //AssetUrl materialUrl;
+}
+
+table MeshPart {
+    index_start:uint32;
+    index_count:uint32;
+    material_index:int32;
+    node_index:int32;
+    //base_transform:Matrix4;
+    name:string;
+    animation_type:AnimationType;
+}
+
+table Mesh {
+    name:string;
+    identity:string;
+    parts:[MeshPart];
+    materials:[MeshMaterial];
+    streams:[MeshStream];
+    //AssetCasBlob vertexSkinningDataBlob;
+    //std::map<std::string, uint32> bones;
+    //std::vector<Animation> animations;
+    //Vector3 boundingBoxMin;
+    //Vector3 boundingBoxMax;
 }
 
 table Manifest {
