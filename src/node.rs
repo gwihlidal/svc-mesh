@@ -12,6 +12,7 @@ use std::rc::Rc;
 pub struct GltfNode {
     pub node_index: GltfIndex,
     pub joint_index: Option<GltfIndex>,
+    pub skin_index: Option<GltfIndex>,
 
     pub parent: Option<GltfNodeRef>,
     pub children: Vec<GltfNodeRef>,
@@ -68,6 +69,11 @@ impl GltfNode {
         let node = Rc::new(RefCell::new(GltfNode {
             node_index: node_ref.index(),
             joint_index: None,
+            skin_index: if let Some(ref skin) = skin_ref {
+                Some(skin.index())
+            } else {
+                None
+            },
             parent: parent.clone(),
             children: Vec::new(),
             name: node_ref.name().map(|s| s.into()),

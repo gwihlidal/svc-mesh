@@ -1,4 +1,5 @@
 //use gltf::{buffer::Source as BufferSource, image::Source as ImageSource, Gltf};
+use std::collections::HashMap;
 use std::path::Path;
 //use std::rc::Rc;
 
@@ -29,6 +30,8 @@ use primitive::*;
 use scene::*;
 use tangents::*;
 use texture::*;
+
+use math::Vector4;
 
 #[derive(Debug, Clone, Default)]
 pub struct GltfOptions {
@@ -80,85 +83,148 @@ fn load_model(model_path: &Path) -> Result<()> {
     println!("Scene Dimensions: {:?}", scene.dimensions);
 
     let has_animations = model.animations.len() > 0;
+    let flatten_transforms = !has_animations;
 
     // Protect against shared triangle vertices being transformed multiple times
-    let mut transformed: Vec<bool> = vec![false; model.vertex_buffer.len()];
+    let mut transformed: Vec<bool> = if flatten_transforms {
+        vec![false; model.vertex_buffer.len()]
+    } else {
+        Vec::new()
+    };
 
     // Map from name of node to indices of all parts owned by that node in the global parts array
-    //std::map<std::string, std::vector<uint32>> partMap;
+    let mut part_map: HashMap<String, Vec<u32>> = HashMap::new();
 
-    /*asset->parts.reserve(model.linearNodes.size());
-    for (const auto& linearNode : model.linearNodes)
-    {
-        if (linearNode->mesh == nullptr)
-            continue;
+    let global_scale = 1.0;
+    let scale = Matrix4::identity();
+    scale.prepend_nonuniform_scaling(&Vector3::new(global_scale, global_scale, global_scale));
 
-        glm::mat4 matrix = scale * linearNode->getMatrix();
+    let mut parts: Vec<MeshAssetPart> = Vec::with_capacity(model.linear_nodes.len());
+    for linear_node in &model.linear_nodes {
+        let linear_node = linear_node.borrow();
+        if let Some(ref mesh) = linear_node.mesh {
+            let matrix = scale * linear_node.get_matrix();
 
-        MeshAssetPart part{};
-        part.baseTransform = toMatrix44(glm::mat4(1.0f));
-        part.name = linearNode->name;
+            let mut part = MeshAssetPart {
+                index_start: 0,
+                index_count: 0,
+                material_index: None,
+                node_index: None,
+                base_transform: Matrix4::identity(),
+                animation_type: AnimationType::None,
+                name: linear_node.name.clone(),
+            };
 
-        std::vector<uint32> partIndices;
+            let mut part_indices: Vec<u32> = Vec::new();
+            for primitive in &mesh.primitives {
+                part.index_start = primitive.index_start;
+                part.index_count = primitive.index_count;
+                part.material_index = if let Some(index) = primitive.material_index {
+                    Some(index as u32)
+                } else {
+                    None
+                };
+                part.animation_type = if has_animations {
+                    if linear_node.skin_index.is_some() {
+                        AnimationType::Skinned
+                    } else {
+                        AnimationType::Rigid
+                    }
+                } else {
+                    AnimationType::None
+                };
 
-        for (const auto& primitive : linearNode->mesh->primitives)
-        {
-            part.firstIndex = primitive->firstIndex;
-            part.indexCount = primitive->indexCount;
-            part.materialIndex = primitive->materialIndex;
+                if flatten_transforms {
+                    for index in (part.index_start..(part.index_start + part.index_count)).step_by(3) {
+                        let i0 = model.index_buffer[index as usize + 0] as usize;
+                        let i1 = model.index_buffer[index as usize + 1] as usize;
+                        let i2 = model.index_buffer[index as usize + 2] as usize;
 
-            if (hasAnimations)
-                part.animationType = linearNode->skinIndex > -1 ? AnimationType::Skinned : AnimationType::Rigid;
+                        if !transformed[i0] {
+                            let pos = Vector4::new(
+                                model.vertex_buffer[i0].position[0],
+                                model.vertex_buffer[i0].position[1],
+                                model.vertex_buffer[i0].position[2],
+                                1.0,
+                            );
+                            let pos = matrix * pos;
+                            model.vertex_buffer[i0].position = [pos.x, pos.y, pos.z];
 
-            if (flatten_transforms)
-            {
-                for (uint32 index = part.firstIndex; index < part.firstIndex + part.indexCount; index += 3)
-                {
-                    const uint32 i0 = model.indexBuffer[index + 0];
-                    const uint32 i1 = model.indexBuffer[index + 1];
-                    const uint32 i2 = model.indexBuffer[index + 2];
+                            let norm = Vector4::new(
+                                model.vertex_buffer[i0].normal[0],
+                                model.vertex_buffer[i0].normal[1],
+                                model.vertex_buffer[i0].normal[2],
+                                1.0,
+                            );
+                            let norm = matrix * norm;
+                            let norm = norm.normalize();
+                            model.vertex_buffer[i0].normal = [norm.x, norm.y, norm.z];
 
-                if (!transformed[i0])
-                {
-                    const glm::vec4 pos0 = glm::vec4(model.vertexBuffer[i0].pos, 1.0f);
-                    model.vertexBuffer[i0].pos = glm::vec3(matrix * pos0);
+                            transformed[i0] = true;
+                        }
 
-                    const glm::vec4 norm0 = glm::vec4(model.vertexBuffer[i0].normal, 1.0f);
-                    model.vertexBuffer[i0].normal = glm::normalize(glm::vec3(matrix * norm0));
+                        if !transformed[i1] {
+                            let pos = Vector4::new(
+                                model.vertex_buffer[i1].position[0],
+                                model.vertex_buffer[i1].position[1],
+                                model.vertex_buffer[i1].position[2],
+                                1.0,
+                            );
+                            let pos = matrix * pos;
+                            model.vertex_buffer[i1].position = [pos.x, pos.y, pos.z];
 
-                    transformed[i0] = true;
-                }
+                            let norm = Vector4::new(
+                                model.vertex_buffer[i1].normal[0],
+                                model.vertex_buffer[i1].normal[1],
+                                model.vertex_buffer[i1].normal[2],
+                                1.0,
+                            );
+                            let norm = matrix * norm;
+                            let norm = norm.normalize();
+                            model.vertex_buffer[i1].normal = [norm.x, norm.y, norm.z];
 
-                if (!transformed[i1])
-                {
-                    const glm::vec4 pos1 = glm::vec4(model.vertexBuffer[i1].pos, 1.0f);
-                    model.vertexBuffer[i1].pos = glm::vec3(matrix * pos1);
+                            transformed[i1] = true;
+                        }
 
-                    const glm::vec4 norm1 = glm::vec4(model.vertexBuffer[i1].normal, 1.0f);
-                    model.vertexBuffer[i1].normal = glm::normalize(glm::vec3(matrix * norm1));
+                        if !transformed[i2] {
+                            let pos = Vector4::new(
+                                model.vertex_buffer[i2].position[0],
+                                model.vertex_buffer[i2].position[1],
+                                model.vertex_buffer[i2].position[2],
+                                1.0,
+                            );
+                            let pos = matrix * pos;
+                            model.vertex_buffer[i2].position = [pos.x, pos.y, pos.z];
 
-                    transformed[i1] = true;
-                }
+                            let norm = Vector4::new(
+                                model.vertex_buffer[i2].normal[0],
+                                model.vertex_buffer[i2].normal[1],
+                                model.vertex_buffer[i2].normal[2],
+                                1.0,
+                            );
+                            let norm = matrix * norm;
+                            let norm = norm.normalize();
+                            model.vertex_buffer[i2].normal = [norm.x, norm.y, norm.z];
 
-                if (!transformed[i2])
-                {
-                    const glm::vec4 pos2 = glm::vec4(model.vertexBuffer[i2].pos, 1.0f);
-                    model.vertexBuffer[i2].pos = glm::vec3(matrix * pos2);
-
-                    const glm::vec4 norm2 = glm::vec4(model.vertexBuffer[i2].normal, 1.0f);
-                    model.vertexBuffer[i2].normal = glm::normalize(glm::vec3(matrix * norm2));
-
-                        transformed[i2] = true;
+                            transformed[i2] = true;
+                        }
                     }
                 }
+
+                parts.push(part.clone());
+                part_indices.push((parts.len() - 1) as u32);
             }
 
-            asset->parts.push_back(part);
-            partIndices.push_back(asset->parts.size() - 1);
-        }
+            assert!(linear_node.name.is_some());
+            let name = if let Some(ref name_ref) = linear_node.name {
+                name_ref.clone()
+            } else {
+                "UNNAMED".to_string()
+            };
 
-        partMap[linearNode->name] = partIndices;
-    }*/
+            part_map.insert(name, part_indices);
+        }
+    }
 
     let mut mesh_data = MeshData::default();
 
@@ -228,9 +294,7 @@ fn load_model(model_path: &Path) -> Result<()> {
     }
 
     // Calculate bounding box
-    //Vector3 minPos, maxPos;
-    //buildBoundingBox(meshData.vertexPositions, *asset);
-    // TODO: Should be able to use model.dimensions
+    let dimensions = (model.dimensions.min, model.dimensions.max);
 
     // Setup streams
     // TODO

@@ -314,33 +314,48 @@ impl GltfAnimation {
             // Find the node associated with the channel index
             let node_ref = model.node_from_index(channel_ref.target().node().index());
             match node_ref {
-                Some(x) =>  {
+                Some(x) => {
                     // Find existing channel associated with the node, if it doesn't exist, create a new channel
-                    let target_channel : &mut GltfAnimationChannel = match channels.iter_mut().find(|channel_i| GltfNodeRef::ptr_eq(&channel_i.node_ref, &x)) {
-                        Some(y) => {
-                            y
-                        },
+                    let target_channel: &mut GltfAnimationChannel = match channels
+                        .iter_mut()
+                        .find(|channel_i| GltfNodeRef::ptr_eq(&channel_i.node_ref, &x))
+                    {
+                        Some(y) => y,
                         None => {
                             let new_channel = GltfAnimationChannel {
-                                node_ref : x,
+                                node_ref: x,
                                 rotation_sampler: None,
                                 translation_sampler: None,
                                 scale_sampler: None,
                             };
                             channels.push(new_channel);
                             channels.last_mut().unwrap()
-                        },
+                        }
                     };
                     match channel_ref.target().property() {
-                        gltf::animation::Property::Translation => {target_channel.translation_sampler = Some(GltfAnimationSampler::from_gltf(&channel_ref.sampler(), data))},
-                        gltf::animation::Property::Rotation => {target_channel.rotation_sampler = Some(GltfAnimationSampler::from_gltf(&channel_ref.sampler(), data))},
-                        gltf::animation::Property::Scale => {target_channel.scale_sampler = Some(GltfAnimationSampler::from_gltf(&channel_ref.sampler(), data))},
-                        _ => println!("Unimplemented: Found morph target channel")
+                        gltf::animation::Property::Translation => {
+                            target_channel.translation_sampler = Some(
+                                GltfAnimationSampler::from_gltf(&channel_ref.sampler(), data),
+                            )
+                        }
+                        gltf::animation::Property::Rotation => {
+                            target_channel.rotation_sampler = Some(GltfAnimationSampler::from_gltf(
+                                &channel_ref.sampler(),
+                                data,
+                            ))
+                        }
+                        gltf::animation::Property::Scale => {
+                            target_channel.scale_sampler = Some(GltfAnimationSampler::from_gltf(
+                                &channel_ref.sampler(),
+                                data,
+                            ))
+                        }
+                        _ => println!("Unimplemented: Found morph target channel"),
                     }
-                },
+                }
                 None => {
                     println!("No node found to match with channel.");
-                },
+                }
             }
         }
 

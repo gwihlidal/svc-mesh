@@ -64,7 +64,7 @@ impl GltfPrimitive {
         let index_start = model.index_buffer.len() as u32;
         let vertex_start = model.vertex_buffer.len() as u32;
 
-        let has_skin = skin_ref.is_some();
+        let _has_skin = skin_ref.is_some();
 
         // Indices / Faces
 

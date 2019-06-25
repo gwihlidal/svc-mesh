@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
+use super::GltfIndex;
 use crate::Dimensions;
 use crate::GltfAnimation;
 use crate::GltfData;
-use super::GltfIndex;
 use crate::GltfMaterial;
 use crate::GltfMesh;
 use crate::GltfNode;
@@ -40,7 +40,7 @@ pub struct GltfVertex {
 
 #[derive(Default, Debug)]
 pub struct GltfModel {
-    pub root_nodes: Vec<GltfNodeRef>, // root nodes
+    pub root_nodes: Vec<GltfNodeRef>,   // root nodes
     pub linear_nodes: Vec<GltfNodeRef>, // all nodes
 
     pub meshes: Vec<Rc<GltfMesh>>,
@@ -88,9 +88,9 @@ impl GltfModel {
         found_node
     }
 
-    fn collect_nodes(&self, _node: &GltfNodeRef, res : &mut Vec<GltfNodeRef>) {
+    fn collect_nodes(&self, _node: &GltfNodeRef, res: &mut Vec<GltfNodeRef>) {
         res.push(_node.clone());
-        for node in _node.borrow().children.iter() {    
+        for node in _node.borrow().children.iter() {
             self.collect_nodes(node, res);
         }
     }
@@ -121,11 +121,11 @@ impl GltfModel {
             model.root_nodes.append(&mut nodev);
         }
 
-        let mut res_nodes : Vec<GltfNodeRef> = Vec::new();
+        let mut res_nodes: Vec<GltfNodeRef> = Vec::new();
         for node in &model.root_nodes {
             model.collect_nodes(node, &mut res_nodes);
         }
-        model.linear_nodes.append(&mut res_nodes);     
+        model.linear_nodes.append(&mut res_nodes);
 
         // Print Nodes
         // for node in model.root_nodes.iter() {
