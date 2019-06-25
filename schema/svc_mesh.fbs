@@ -1,0 +1,11 @@
+namespace service.mesh.schema;
+
+table Mesh {
+
+}
+
+table Manifest {
+    meshes:[Mesh];
+}
+
+root_type Manifest;

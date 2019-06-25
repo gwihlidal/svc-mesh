@@ -1,0 +1,1 @@
+"./flatc.exe" --cpp --rust --force-empty svc_mesh.fbs
