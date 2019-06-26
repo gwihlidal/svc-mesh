@@ -32,7 +32,7 @@ pub struct SkinningData {
 #[derive(Debug, Default)]
 pub struct MeshData {
     pub skinning_data: Vec<SkinningData>,
-    pub positions: Vec<Vector3>,
+    pub positions: Vec<[f32; 3]>,
     pub tex_coords: Vec<Vector2>,
     pub normals: Vec<Vector3>,
     pub tangents: Vec<Vector3>,

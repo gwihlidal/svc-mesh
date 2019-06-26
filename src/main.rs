@@ -7,6 +7,7 @@ mod animation;
 mod data;
 mod error;
 mod format;
+mod generated;
 mod material;
 mod math;
 mod mesh;
@@ -21,6 +22,7 @@ use animation::*;
 use data::*;
 use error::*;
 use format::*;
+use generated::service::mesh::schema;
 use material::*;
 use math::*;
 use mesh::*;
@@ -42,7 +44,15 @@ pub struct GltfOptions {
     pub flip_v_coord: bool,
 }
 
-fn load_model(model_path: &Path) -> Result<()> {
+#[inline(always)]
+pub unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
+    ::std::slice::from_raw_parts((p as *const T) as *const u8, ::std::mem::size_of::<T>())
+}
+
+fn load_model<'a>(
+    mut builder: &mut flatbuffers::FlatBufferBuilder<'a>,
+    model_path: &Path,
+) -> Result<flatbuffers::WIPOffset<schema::Mesh<'a>>> {
     let _base_path = model_path.parent().unwrap_or(Path::new("./"));
     //let gltf_data = read_to_end(model_path)?;
     //let (gltf, gltf_buffers) = import(&gltf_data, base_path)?;
@@ -135,7 +145,9 @@ fn load_model(model_path: &Path) -> Result<()> {
                 };
 
                 if flatten_transforms {
-                    for index in (part.index_start..(part.index_start + part.index_count)).step_by(3) {
+                    for index in
+                        (part.index_start..(part.index_start + part.index_count)).step_by(3)
+                    {
                         let i0 = model.index_buffer[index as usize + 0] as usize;
                         let i1 = model.index_buffer[index as usize + 1] as usize;
                         let i2 = model.index_buffer[index as usize + 2] as usize;
@@ -243,11 +255,7 @@ fn load_model(model_path: &Path) -> Result<()> {
 
     for i in 0..model.vertex_buffer.len() {
         let vertex = &model.vertex_buffer[i];
-        mesh_data.positions.push(Vector3::new(
-            vertex.position[0],
-            vertex.position[1],
-            vertex.position[2],
-        ));
+        mesh_data.positions.push(vertex.position);
         mesh_data
             .tex_coords
             .push(Vector2::new(vertex.uv0[0], vertex.uv0[1]));
@@ -298,17 +306,77 @@ fn load_model(model_path: &Path) -> Result<()> {
 
     // Setup streams
     // TODO
+    let mut streams: Vec<_> = Vec::new();
+
+    // Positions
+
+    // Normals
+
+    // Tangents
+
+    // Bitangents
+
+    // Texture Coords
+
+    // Colors
+
+    // Indices
+    let index_data = mesh_data.indices.as_ptr() as *const u8;
+    let index_data = unsafe {
+        std::slice::from_raw_parts(
+            index_data,
+            mesh_data.indices.len() * std::mem::size_of::<u32>(),
+        )
+    };
+    let index_data = Some(builder.create_vector_direct(&index_data));
+    let index_stream = schema::MeshStream::create(
+        &mut builder,
+        &schema::MeshStreamArgs {
+            format: schema::StreamFormat::Int,
+            type_: schema::StreamType::Indices,
+            elements: mesh_data.indices.len() as u64,
+            data: index_data,
+        },
+    );
+    streams.push(index_stream);
+
+    let streams = Some(builder.create_vector(&streams));
 
     // Setup materials
     // TODO
+    //let materials: Vec<_> = Vec::new();
+    //let materials = Some(builder.create_vector(&materials));
 
     // Serialize asset
     // TODO
+    // let streams: Vec<schema::MeshStream> = Vec::new();
+    //let parts: Vec<_> = Vec::new();
+    //let parts = Some(builder.create_vector(&parts));
 
-    Ok(())
+    let name = Some(builder.create_string(&model_path.to_string_lossy()));
+    let identity = "123456-ident";
+    let identity = Some(builder.create_string(&identity));
+    let mesh = schema::Mesh::create(
+        &mut builder,
+        &schema::MeshArgs {
+            name,
+            identity,
+            streams,
+            // materials,
+            //parts,
+            materials: None,
+            parts: None,
+        },
+    );
+
+    Ok(mesh)
 }
 
 fn main() {
+    let meshes = ["data/Combat_Helmet.glb", "data/Floor_Junk_Cluster_01.glb"];
+
+    let mut manifest_builder = flatbuffers::FlatBufferBuilder::new();
+
     //list(&"data/Book_03.glb").expect("runtime error");
     //list(&"data/BoxAnimated.glb").expect("runtime error");
     //list(&"data/Combat_Helmet.glb").expect("runtime error");
@@ -317,16 +385,28 @@ fn main() {
     //list(&"data/Machine_01.glb").expect("runtime error");
     //list(&"data/RiggedFigure.glb").expect("runtime error");
     //list(&"data/Warrok.glb").expect("runtime error");
-
-    //display(&"data/RiggedFigure.glb").expect("runtime error");
-
-    //println!("Model 1");
-    load_model(&Path::new("data/Floor_Junk_Cluster_01.glb")).expect("runtime error");
-    //load_model(&Path::new("data/Combat_Helmet.glb")).expect("runtime error");
-    //println!("Model 2");
     //load_model(&Path::new("data/SciFiHelmet.gltf")).expect("runtime error");
     //load_model(&Path::new("data/EpicCitadel.glb")).expect("runtime error");
     //load_model(&Path::new("data/BoxAnimated.glb")).expect("runtime error");
     //load_model(&Path::new("data/RiggedFigure.glb")).expect("runtime error");
-    println!("Done");
+    //display(&"data/RiggedFigure.glb").expect("runtime error");
+
+    let mut manifest_meshes: Vec<_> = Vec::with_capacity(meshes.len());
+    for mesh_name in &meshes {
+        let mesh = load_model(&mut manifest_builder, &Path::new(mesh_name)).expect("runtime error");
+        manifest_meshes.push(mesh);
+    }
+
+    let manifest_meshes = Some(manifest_builder.create_vector(&manifest_meshes));
+    let manifest = schema::Manifest::create(
+        &mut manifest_builder,
+        &schema::ManifestArgs {
+            meshes: manifest_meshes,
+        },
+    );
+
+    manifest_builder.finish(manifest, None);
+    let manifest_data = manifest_builder.finished_data();
+
+    println!("Done - {} bytes", manifest_data.len());
 }
