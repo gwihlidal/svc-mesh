@@ -6,792 +6,916 @@
 extern crate flatbuffers;
 
 pub mod service {
-  #![allow(dead_code)]
-  #![allow(unused_imports)]
-
-  use std::mem;
-  use std::cmp::Ordering;
-
-  extern crate flatbuffers;
-  use self::flatbuffers::EndianScalar;
-pub mod mesh {
-  #![allow(dead_code)]
-  #![allow(unused_imports)]
-
-  use std::mem;
-  use std::cmp::Ordering;
-
-  extern crate flatbuffers;
-  use self::flatbuffers::EndianScalar;
-pub mod schema {
-  #![allow(dead_code)]
-  #![allow(unused_imports)]
-
-  use std::mem;
-  use std::cmp::Ordering;
-
-  extern crate flatbuffers;
-  use self::flatbuffers::EndianScalar;
-
-#[allow(non_camel_case_types)]
-#[repr(i8)]
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum StreamFormat {
-  Invalid = 0,
-  Float = 1,
-  Vector4 = 2,
-  Vector3 = 3,
-  Vector2 = 4,
-  Int = 5,
-  Int3 = 6,
-
-}
-
-const ENUM_MIN_STREAM_FORMAT: i8 = 0;
-const ENUM_MAX_STREAM_FORMAT: i8 = 6;
-
-impl<'a> flatbuffers::Follow<'a> for StreamFormat {
-  type Inner = Self;
-  #[inline]
-  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    flatbuffers::read_scalar_at::<Self>(buf, loc)
-  }
-}
-
-impl flatbuffers::EndianScalar for StreamFormat {
-  #[inline]
-  fn to_little_endian(self) -> Self {
-    let n = i8::to_le(self as i8);
-    let p = &n as *const i8 as *const StreamFormat;
-    unsafe { *p }
-  }
-  #[inline]
-  fn from_little_endian(self) -> Self {
-    let n = i8::from_le(self as i8);
-    let p = &n as *const i8 as *const StreamFormat;
-    unsafe { *p }
-  }
-}
-
-impl flatbuffers::Push for StreamFormat {
-    type Output = StreamFormat;
-    #[inline]
-    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
-        flatbuffers::emplace_scalar::<StreamFormat>(dst, *self);
-    }
-}
-
-#[allow(non_camel_case_types)]
-const ENUM_VALUES_STREAM_FORMAT:[StreamFormat; 7] = [
-  StreamFormat::Invalid,
-  StreamFormat::Float,
-  StreamFormat::Vector4,
-  StreamFormat::Vector3,
-  StreamFormat::Vector2,
-  StreamFormat::Int,
-  StreamFormat::Int3
-];
-
-#[allow(non_camel_case_types)]
-const ENUM_NAMES_STREAM_FORMAT:[&'static str; 7] = [
-    "Invalid",
-    "Float",
-    "Vector4",
-    "Vector3",
-    "Vector2",
-    "Int",
-    "Int3"
-];
-
-pub fn enum_name_stream_format(e: StreamFormat) -> &'static str {
-  let index: usize = e as usize;
-  ENUM_NAMES_STREAM_FORMAT[index]
-}
-
-#[allow(non_camel_case_types)]
-#[repr(i8)]
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum StreamType {
-  Positions = 0,
-  Normals = 1,
-  Tangents = 2,
-  Bitangents = 3,
-  TextureCoordinates = 4,
-  Colors = 5,
-  Indices = 6,
-
-}
-
-const ENUM_MIN_STREAM_TYPE: i8 = 0;
-const ENUM_MAX_STREAM_TYPE: i8 = 6;
-
-impl<'a> flatbuffers::Follow<'a> for StreamType {
-  type Inner = Self;
-  #[inline]
-  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    flatbuffers::read_scalar_at::<Self>(buf, loc)
-  }
-}
-
-impl flatbuffers::EndianScalar for StreamType {
-  #[inline]
-  fn to_little_endian(self) -> Self {
-    let n = i8::to_le(self as i8);
-    let p = &n as *const i8 as *const StreamType;
-    unsafe { *p }
-  }
-  #[inline]
-  fn from_little_endian(self) -> Self {
-    let n = i8::from_le(self as i8);
-    let p = &n as *const i8 as *const StreamType;
-    unsafe { *p }
-  }
-}
-
-impl flatbuffers::Push for StreamType {
-    type Output = StreamType;
-    #[inline]
-    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
-        flatbuffers::emplace_scalar::<StreamType>(dst, *self);
-    }
-}
-
-#[allow(non_camel_case_types)]
-const ENUM_VALUES_STREAM_TYPE:[StreamType; 7] = [
-  StreamType::Positions,
-  StreamType::Normals,
-  StreamType::Tangents,
-  StreamType::Bitangents,
-  StreamType::TextureCoordinates,
-  StreamType::Colors,
-  StreamType::Indices
-];
-
-#[allow(non_camel_case_types)]
-const ENUM_NAMES_STREAM_TYPE:[&'static str; 7] = [
-    "Positions",
-    "Normals",
-    "Tangents",
-    "Bitangents",
-    "TextureCoordinates",
-    "Colors",
-    "Indices"
-];
-
-pub fn enum_name_stream_type(e: StreamType) -> &'static str {
-  let index: usize = e as usize;
-  ENUM_NAMES_STREAM_TYPE[index]
-}
-
-#[allow(non_camel_case_types)]
-#[repr(i8)]
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum AnimationType {
-  None = 0,
-  Rigid = 1,
-  Skinned = 2,
-
-}
-
-const ENUM_MIN_ANIMATION_TYPE: i8 = 0;
-const ENUM_MAX_ANIMATION_TYPE: i8 = 2;
-
-impl<'a> flatbuffers::Follow<'a> for AnimationType {
-  type Inner = Self;
-  #[inline]
-  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    flatbuffers::read_scalar_at::<Self>(buf, loc)
-  }
-}
-
-impl flatbuffers::EndianScalar for AnimationType {
-  #[inline]
-  fn to_little_endian(self) -> Self {
-    let n = i8::to_le(self as i8);
-    let p = &n as *const i8 as *const AnimationType;
-    unsafe { *p }
-  }
-  #[inline]
-  fn from_little_endian(self) -> Self {
-    let n = i8::from_le(self as i8);
-    let p = &n as *const i8 as *const AnimationType;
-    unsafe { *p }
-  }
-}
-
-impl flatbuffers::Push for AnimationType {
-    type Output = AnimationType;
-    #[inline]
-    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
-        flatbuffers::emplace_scalar::<AnimationType>(dst, *self);
-    }
-}
-
-#[allow(non_camel_case_types)]
-const ENUM_VALUES_ANIMATION_TYPE:[AnimationType; 3] = [
-  AnimationType::None,
-  AnimationType::Rigid,
-  AnimationType::Skinned
-];
-
-#[allow(non_camel_case_types)]
-const ENUM_NAMES_ANIMATION_TYPE:[&'static str; 3] = [
-    "None",
-    "Rigid",
-    "Skinned"
-];
-
-pub fn enum_name_animation_type(e: AnimationType) -> &'static str {
-  let index: usize = e as usize;
-  ENUM_NAMES_ANIMATION_TYPE[index]
-}
-
-pub enum MeshStreamOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct MeshStream<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for MeshStream<'a> {
-    type Inner = MeshStream<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> MeshStream<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        MeshStream {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args MeshStreamArgs<'args>) -> flatbuffers::WIPOffset<MeshStream<'bldr>> {
-      let mut builder = MeshStreamBuilder::new(_fbb);
-      builder.add_elements(args.elements);
-      if let Some(x) = args.data { builder.add_data(x); }
-      builder.add_format(args.format);
-      builder.add_type_(args.type_);
-      builder.finish()
-    }
-
-    pub const VT_TYPE_: flatbuffers::VOffsetT = 4;
-    pub const VT_FORMAT: flatbuffers::VOffsetT = 6;
-    pub const VT_ELEMENTS: flatbuffers::VOffsetT = 8;
-    pub const VT_DATA: flatbuffers::VOffsetT = 10;
-
-  #[inline]
-  pub fn type_(&self) -> StreamType {
-    self._tab.get::<StreamType>(MeshStream::VT_TYPE_, Some(StreamType::Positions)).unwrap()
-  }
-  #[inline]
-  pub fn format(&self) -> StreamFormat {
-    self._tab.get::<StreamFormat>(MeshStream::VT_FORMAT, Some(StreamFormat::Invalid)).unwrap()
-  }
-  #[inline]
-  pub fn elements(&self) -> u64 {
-    self._tab.get::<u64>(MeshStream::VT_ELEMENTS, Some(0)).unwrap()
-  }
-  #[inline]
-  pub fn data(&self) -> Option<&'a [u8]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(MeshStream::VT_DATA, None).map(|v| v.safe_slice())
-  }
-}
-
-pub struct MeshStreamArgs<'a> {
-    pub type_: StreamType,
-    pub format: StreamFormat,
-    pub elements: u64,
-    pub data: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
-}
-impl<'a> Default for MeshStreamArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        MeshStreamArgs {
-            type_: StreamType::Positions,
-            format: StreamFormat::Invalid,
-            elements: 0,
-            data: None,
-        }
-    }
-}
-pub struct MeshStreamBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> MeshStreamBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_type_(&mut self, type_: StreamType) {
-    self.fbb_.push_slot::<StreamType>(MeshStream::VT_TYPE_, type_, StreamType::Positions);
-  }
-  #[inline]
-  pub fn add_format(&mut self, format: StreamFormat) {
-    self.fbb_.push_slot::<StreamFormat>(MeshStream::VT_FORMAT, format, StreamFormat::Invalid);
-  }
-  #[inline]
-  pub fn add_elements(&mut self, elements: u64) {
-    self.fbb_.push_slot::<u64>(MeshStream::VT_ELEMENTS, elements, 0);
-  }
-  #[inline]
-  pub fn add_data(&mut self, data: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(MeshStream::VT_DATA, data);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> MeshStreamBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    MeshStreamBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<MeshStream<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-pub enum MeshMaterialOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct MeshMaterial<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for MeshMaterial<'a> {
-    type Inner = MeshMaterial<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> MeshMaterial<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        MeshMaterial {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args MeshMaterialArgs<'args>) -> flatbuffers::WIPOffset<MeshMaterial<'bldr>> {
-      let mut builder = MeshMaterialBuilder::new(_fbb);
-      if let Some(x) = args.name { builder.add_name(x); }
-      builder.finish()
-    }
-
-    pub const VT_NAME: flatbuffers::VOffsetT = 4;
-
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(MeshMaterial::VT_NAME, None)
-  }
-}
-
-pub struct MeshMaterialArgs<'a> {
-    pub name: Option<flatbuffers::WIPOffset<&'a  str>>,
-}
-impl<'a> Default for MeshMaterialArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        MeshMaterialArgs {
-            name: None,
-        }
-    }
-}
-pub struct MeshMaterialBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> MeshMaterialBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(MeshMaterial::VT_NAME, name);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> MeshMaterialBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    MeshMaterialBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<MeshMaterial<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-pub enum MeshPartOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct MeshPart<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for MeshPart<'a> {
-    type Inner = MeshPart<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> MeshPart<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        MeshPart {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args MeshPartArgs<'args>) -> flatbuffers::WIPOffset<MeshPart<'bldr>> {
-      let mut builder = MeshPartBuilder::new(_fbb);
-      if let Some(x) = args.name { builder.add_name(x); }
-      builder.add_node_index(args.node_index);
-      builder.add_material_index(args.material_index);
-      builder.add_index_count(args.index_count);
-      builder.add_index_start(args.index_start);
-      builder.add_animation_type(args.animation_type);
-      builder.finish()
-    }
-
-    pub const VT_INDEX_START: flatbuffers::VOffsetT = 4;
-    pub const VT_INDEX_COUNT: flatbuffers::VOffsetT = 6;
-    pub const VT_MATERIAL_INDEX: flatbuffers::VOffsetT = 8;
-    pub const VT_NODE_INDEX: flatbuffers::VOffsetT = 10;
-    pub const VT_NAME: flatbuffers::VOffsetT = 12;
-    pub const VT_ANIMATION_TYPE: flatbuffers::VOffsetT = 14;
-
-  #[inline]
-  pub fn index_start(&self) -> u32 {
-    self._tab.get::<u32>(MeshPart::VT_INDEX_START, Some(0)).unwrap()
-  }
-  #[inline]
-  pub fn index_count(&self) -> u32 {
-    self._tab.get::<u32>(MeshPart::VT_INDEX_COUNT, Some(0)).unwrap()
-  }
-  #[inline]
-  pub fn material_index(&self) -> i32 {
-    self._tab.get::<i32>(MeshPart::VT_MATERIAL_INDEX, Some(0)).unwrap()
-  }
-  #[inline]
-  pub fn node_index(&self) -> i32 {
-    self._tab.get::<i32>(MeshPart::VT_NODE_INDEX, Some(0)).unwrap()
-  }
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(MeshPart::VT_NAME, None)
-  }
-  #[inline]
-  pub fn animation_type(&self) -> AnimationType {
-    self._tab.get::<AnimationType>(MeshPart::VT_ANIMATION_TYPE, Some(AnimationType::None)).unwrap()
-  }
-}
-
-pub struct MeshPartArgs<'a> {
-    pub index_start: u32,
-    pub index_count: u32,
-    pub material_index: i32,
-    pub node_index: i32,
-    pub name: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub animation_type: AnimationType,
-}
-impl<'a> Default for MeshPartArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        MeshPartArgs {
-            index_start: 0,
-            index_count: 0,
-            material_index: 0,
-            node_index: 0,
-            name: None,
-            animation_type: AnimationType::None,
-        }
-    }
-}
-pub struct MeshPartBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> MeshPartBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_index_start(&mut self, index_start: u32) {
-    self.fbb_.push_slot::<u32>(MeshPart::VT_INDEX_START, index_start, 0);
-  }
-  #[inline]
-  pub fn add_index_count(&mut self, index_count: u32) {
-    self.fbb_.push_slot::<u32>(MeshPart::VT_INDEX_COUNT, index_count, 0);
-  }
-  #[inline]
-  pub fn add_material_index(&mut self, material_index: i32) {
-    self.fbb_.push_slot::<i32>(MeshPart::VT_MATERIAL_INDEX, material_index, 0);
-  }
-  #[inline]
-  pub fn add_node_index(&mut self, node_index: i32) {
-    self.fbb_.push_slot::<i32>(MeshPart::VT_NODE_INDEX, node_index, 0);
-  }
-  #[inline]
-  pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(MeshPart::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_animation_type(&mut self, animation_type: AnimationType) {
-    self.fbb_.push_slot::<AnimationType>(MeshPart::VT_ANIMATION_TYPE, animation_type, AnimationType::None);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> MeshPartBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    MeshPartBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<MeshPart<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-pub enum MeshOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct Mesh<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for Mesh<'a> {
-    type Inner = Mesh<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> Mesh<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        Mesh {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args MeshArgs<'args>) -> flatbuffers::WIPOffset<Mesh<'bldr>> {
-      let mut builder = MeshBuilder::new(_fbb);
-      if let Some(x) = args.streams { builder.add_streams(x); }
-      if let Some(x) = args.materials { builder.add_materials(x); }
-      if let Some(x) = args.parts { builder.add_parts(x); }
-      if let Some(x) = args.identity { builder.add_identity(x); }
-      if let Some(x) = args.name { builder.add_name(x); }
-      builder.finish()
-    }
-
-    pub const VT_NAME: flatbuffers::VOffsetT = 4;
-    pub const VT_IDENTITY: flatbuffers::VOffsetT = 6;
-    pub const VT_PARTS: flatbuffers::VOffsetT = 8;
-    pub const VT_MATERIALS: flatbuffers::VOffsetT = 10;
-    pub const VT_STREAMS: flatbuffers::VOffsetT = 12;
-
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(Mesh::VT_NAME, None)
-  }
-  #[inline]
-  pub fn identity(&self) -> Option<&'a str> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(Mesh::VT_IDENTITY, None)
-  }
-  #[inline]
-  pub fn parts(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshPart<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshPart<'a>>>>>(Mesh::VT_PARTS, None)
-  }
-  #[inline]
-  pub fn materials(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshMaterial<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshMaterial<'a>>>>>(Mesh::VT_MATERIALS, None)
-  }
-  #[inline]
-  pub fn streams(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshStream<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshStream<'a>>>>>(Mesh::VT_STREAMS, None)
-  }
-}
-
-pub struct MeshArgs<'a> {
-    pub name: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub identity: Option<flatbuffers::WIPOffset<&'a  str>>,
-    pub parts: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<MeshPart<'a >>>>>,
-    pub materials: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<MeshMaterial<'a >>>>>,
-    pub streams: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<MeshStream<'a >>>>>,
-}
-impl<'a> Default for MeshArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        MeshArgs {
-            name: None,
-            identity: None,
-            parts: None,
-            materials: None,
-            streams: None,
-        }
-    }
-}
-pub struct MeshBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> MeshBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_identity(&mut self, identity: flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_IDENTITY, identity);
-  }
-  #[inline]
-  pub fn add_parts(&mut self, parts: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<MeshPart<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_PARTS, parts);
-  }
-  #[inline]
-  pub fn add_materials(&mut self, materials: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<MeshMaterial<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_MATERIALS, materials);
-  }
-  #[inline]
-  pub fn add_streams(&mut self, streams: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<MeshStream<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_STREAMS, streams);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> MeshBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    MeshBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<Mesh<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-pub enum ManifestOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct Manifest<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for Manifest<'a> {
-    type Inner = Manifest<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> Manifest<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        Manifest {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args ManifestArgs<'args>) -> flatbuffers::WIPOffset<Manifest<'bldr>> {
-      let mut builder = ManifestBuilder::new(_fbb);
-      if let Some(x) = args.meshes { builder.add_meshes(x); }
-      builder.finish()
-    }
-
-    pub const VT_MESHES: flatbuffers::VOffsetT = 4;
-
-  #[inline]
-  pub fn meshes(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Mesh<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Mesh<'a>>>>>(Manifest::VT_MESHES, None)
-  }
-}
-
-pub struct ManifestArgs<'a> {
-    pub meshes: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<Mesh<'a >>>>>,
-}
-impl<'a> Default for ManifestArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        ManifestArgs {
-            meshes: None,
-        }
-    }
-}
-pub struct ManifestBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> ManifestBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_meshes(&mut self, meshes: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<Mesh<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Manifest::VT_MESHES, meshes);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ManifestBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    ManifestBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<Manifest<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-#[inline]
-pub fn get_root_as_manifest<'a>(buf: &'a [u8]) -> Manifest<'a> {
-  flatbuffers::get_root::<Manifest<'a>>(buf)
-}
-
-#[inline]
-pub fn get_size_prefixed_root_as_manifest<'a>(buf: &'a [u8]) -> Manifest<'a> {
-  flatbuffers::get_size_prefixed_root::<Manifest<'a>>(buf)
-}
-
-#[inline]
-pub fn finish_manifest_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-    root: flatbuffers::WIPOffset<Manifest<'a>>) {
-  fbb.finish(root, None);
-}
-
-#[inline]
-pub fn finish_size_prefixed_manifest_buffer<'a, 'b>(fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>, root: flatbuffers::WIPOffset<Manifest<'a>>) {
-  fbb.finish_size_prefixed(root, None);
-}
-}  // pub mod schema
-}  // pub mod mesh
-}  // pub mod service
-
+    #![allow(dead_code)]
+    #![allow(unused_imports)]
+
+    use std::cmp::Ordering;
+    use std::mem;
+
+    extern crate flatbuffers;
+    use self::flatbuffers::EndianScalar;
+    pub mod mesh {
+        #![allow(dead_code)]
+        #![allow(unused_imports)]
+
+        use std::cmp::Ordering;
+        use std::mem;
+
+        extern crate flatbuffers;
+        use self::flatbuffers::EndianScalar;
+        pub mod schema {
+            #![allow(dead_code)]
+            #![allow(unused_imports)]
+
+            use std::cmp::Ordering;
+            use std::mem;
+
+            extern crate flatbuffers;
+            use self::flatbuffers::EndianScalar;
+
+            #[allow(non_camel_case_types)]
+            #[repr(i8)]
+            #[derive(Clone, Copy, PartialEq, Debug)]
+            pub enum StreamFormat {
+                Invalid = 0,
+                Float = 1,
+                Vector4 = 2,
+                Vector3 = 3,
+                Vector2 = 4,
+                Int = 5,
+                Int3 = 6,
+            }
+
+            const ENUM_MIN_STREAM_FORMAT: i8 = 0;
+            const ENUM_MAX_STREAM_FORMAT: i8 = 6;
+
+            impl<'a> flatbuffers::Follow<'a> for StreamFormat {
+                type Inner = Self;
+                #[inline]
+                fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    flatbuffers::read_scalar_at::<Self>(buf, loc)
+                }
+            }
+
+            impl flatbuffers::EndianScalar for StreamFormat {
+                #[inline]
+                fn to_little_endian(self) -> Self {
+                    let n = i8::to_le(self as i8);
+                    let p = &n as *const i8 as *const StreamFormat;
+                    unsafe { *p }
+                }
+                #[inline]
+                fn from_little_endian(self) -> Self {
+                    let n = i8::from_le(self as i8);
+                    let p = &n as *const i8 as *const StreamFormat;
+                    unsafe { *p }
+                }
+            }
+
+            impl flatbuffers::Push for StreamFormat {
+                type Output = StreamFormat;
+                #[inline]
+                fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+                    flatbuffers::emplace_scalar::<StreamFormat>(dst, *self);
+                }
+            }
+
+            #[allow(non_camel_case_types)]
+            const ENUM_VALUES_STREAM_FORMAT: [StreamFormat; 7] = [
+                StreamFormat::Invalid,
+                StreamFormat::Float,
+                StreamFormat::Vector4,
+                StreamFormat::Vector3,
+                StreamFormat::Vector2,
+                StreamFormat::Int,
+                StreamFormat::Int3,
+            ];
+
+            #[allow(non_camel_case_types)]
+            const ENUM_NAMES_STREAM_FORMAT: [&'static str; 7] = [
+                "Invalid", "Float", "Vector4", "Vector3", "Vector2", "Int", "Int3",
+            ];
+
+            pub fn enum_name_stream_format(e: StreamFormat) -> &'static str {
+                let index: usize = e as usize;
+                ENUM_NAMES_STREAM_FORMAT[index]
+            }
+
+            #[allow(non_camel_case_types)]
+            #[repr(i8)]
+            #[derive(Clone, Copy, PartialEq, Debug)]
+            pub enum StreamType {
+                Positions = 0,
+                Normals = 1,
+                Tangents = 2,
+                Bitangents = 3,
+                TextureCoordinates = 4,
+                Colors = 5,
+                Indices = 6,
+            }
+
+            const ENUM_MIN_STREAM_TYPE: i8 = 0;
+            const ENUM_MAX_STREAM_TYPE: i8 = 6;
+
+            impl<'a> flatbuffers::Follow<'a> for StreamType {
+                type Inner = Self;
+                #[inline]
+                fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    flatbuffers::read_scalar_at::<Self>(buf, loc)
+                }
+            }
+
+            impl flatbuffers::EndianScalar for StreamType {
+                #[inline]
+                fn to_little_endian(self) -> Self {
+                    let n = i8::to_le(self as i8);
+                    let p = &n as *const i8 as *const StreamType;
+                    unsafe { *p }
+                }
+                #[inline]
+                fn from_little_endian(self) -> Self {
+                    let n = i8::from_le(self as i8);
+                    let p = &n as *const i8 as *const StreamType;
+                    unsafe { *p }
+                }
+            }
+
+            impl flatbuffers::Push for StreamType {
+                type Output = StreamType;
+                #[inline]
+                fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+                    flatbuffers::emplace_scalar::<StreamType>(dst, *self);
+                }
+            }
+
+            #[allow(non_camel_case_types)]
+            const ENUM_VALUES_STREAM_TYPE: [StreamType; 7] = [
+                StreamType::Positions,
+                StreamType::Normals,
+                StreamType::Tangents,
+                StreamType::Bitangents,
+                StreamType::TextureCoordinates,
+                StreamType::Colors,
+                StreamType::Indices,
+            ];
+
+            #[allow(non_camel_case_types)]
+            const ENUM_NAMES_STREAM_TYPE: [&'static str; 7] = [
+                "Positions",
+                "Normals",
+                "Tangents",
+                "Bitangents",
+                "TextureCoordinates",
+                "Colors",
+                "Indices",
+            ];
+
+            pub fn enum_name_stream_type(e: StreamType) -> &'static str {
+                let index: usize = e as usize;
+                ENUM_NAMES_STREAM_TYPE[index]
+            }
+
+            #[allow(non_camel_case_types)]
+            #[repr(i8)]
+            #[derive(Clone, Copy, PartialEq, Debug)]
+            pub enum AnimationType {
+                None = 0,
+                Rigid = 1,
+                Skinned = 2,
+            }
+
+            const ENUM_MIN_ANIMATION_TYPE: i8 = 0;
+            const ENUM_MAX_ANIMATION_TYPE: i8 = 2;
+
+            impl<'a> flatbuffers::Follow<'a> for AnimationType {
+                type Inner = Self;
+                #[inline]
+                fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    flatbuffers::read_scalar_at::<Self>(buf, loc)
+                }
+            }
+
+            impl flatbuffers::EndianScalar for AnimationType {
+                #[inline]
+                fn to_little_endian(self) -> Self {
+                    let n = i8::to_le(self as i8);
+                    let p = &n as *const i8 as *const AnimationType;
+                    unsafe { *p }
+                }
+                #[inline]
+                fn from_little_endian(self) -> Self {
+                    let n = i8::from_le(self as i8);
+                    let p = &n as *const i8 as *const AnimationType;
+                    unsafe { *p }
+                }
+            }
+
+            impl flatbuffers::Push for AnimationType {
+                type Output = AnimationType;
+                #[inline]
+                fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+                    flatbuffers::emplace_scalar::<AnimationType>(dst, *self);
+                }
+            }
+
+            #[allow(non_camel_case_types)]
+            const ENUM_VALUES_ANIMATION_TYPE: [AnimationType; 3] = [
+                AnimationType::None,
+                AnimationType::Rigid,
+                AnimationType::Skinned,
+            ];
+
+            #[allow(non_camel_case_types)]
+            const ENUM_NAMES_ANIMATION_TYPE: [&'static str; 3] = ["None", "Rigid", "Skinned"];
+
+            pub fn enum_name_animation_type(e: AnimationType) -> &'static str {
+                let index: usize = e as usize;
+                ENUM_NAMES_ANIMATION_TYPE[index]
+            }
+
+            pub enum MeshStreamOffset {}
+            #[derive(Copy, Clone, Debug, PartialEq)]
+
+            pub struct MeshStream<'a> {
+                pub _tab: flatbuffers::Table<'a>,
+            }
+
+            impl<'a> flatbuffers::Follow<'a> for MeshStream<'a> {
+                type Inner = MeshStream<'a>;
+                #[inline]
+                fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: flatbuffers::Table { buf: buf, loc: loc },
+                    }
+                }
+            }
+
+            impl<'a> MeshStream<'a> {
+                #[inline]
+                pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+                    MeshStream { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+                    _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+                    args: &'args MeshStreamArgs<'args>,
+                ) -> flatbuffers::WIPOffset<MeshStream<'bldr>> {
+                    let mut builder = MeshStreamBuilder::new(_fbb);
+                    builder.add_elements(args.elements);
+                    if let Some(x) = args.data {
+                        builder.add_data(x);
+                    }
+                    builder.add_format(args.format);
+                    builder.add_type_(args.type_);
+                    builder.finish()
+                }
+
+                pub const VT_TYPE_: flatbuffers::VOffsetT = 4;
+                pub const VT_FORMAT: flatbuffers::VOffsetT = 6;
+                pub const VT_ELEMENTS: flatbuffers::VOffsetT = 8;
+                pub const VT_DATA: flatbuffers::VOffsetT = 10;
+
+                #[inline]
+                pub fn type_(&self) -> StreamType {
+                    self._tab
+                        .get::<StreamType>(MeshStream::VT_TYPE_, Some(StreamType::Positions))
+                        .unwrap()
+                }
+                #[inline]
+                pub fn format(&self) -> StreamFormat {
+                    self._tab
+                        .get::<StreamFormat>(MeshStream::VT_FORMAT, Some(StreamFormat::Invalid))
+                        .unwrap()
+                }
+                #[inline]
+                pub fn elements(&self) -> u64 {
+                    self._tab
+                        .get::<u64>(MeshStream::VT_ELEMENTS, Some(0))
+                        .unwrap()
+                }
+                #[inline]
+                pub fn data(&self) -> Option<&'a [u8]> {
+                    self._tab
+                        .get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(
+                            MeshStream::VT_DATA,
+                            None,
+                        )
+                        .map(|v| v.safe_slice())
+                }
+            }
+
+            pub struct MeshStreamArgs<'a> {
+                pub type_: StreamType,
+                pub format: StreamFormat,
+                pub elements: u64,
+                pub data: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
+            }
+            impl<'a> Default for MeshStreamArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    MeshStreamArgs {
+                        type_: StreamType::Positions,
+                        format: StreamFormat::Invalid,
+                        elements: 0,
+                        data: None,
+                    }
+                }
+            }
+            pub struct MeshStreamBuilder<'a: 'b, 'b> {
+                fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+                start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b> MeshStreamBuilder<'a, 'b> {
+                #[inline]
+                pub fn add_type_(&mut self, type_: StreamType) {
+                    self.fbb_.push_slot::<StreamType>(
+                        MeshStream::VT_TYPE_,
+                        type_,
+                        StreamType::Positions,
+                    );
+                }
+                #[inline]
+                pub fn add_format(&mut self, format: StreamFormat) {
+                    self.fbb_.push_slot::<StreamFormat>(
+                        MeshStream::VT_FORMAT,
+                        format,
+                        StreamFormat::Invalid,
+                    );
+                }
+                #[inline]
+                pub fn add_elements(&mut self, elements: u64) {
+                    self.fbb_
+                        .push_slot::<u64>(MeshStream::VT_ELEMENTS, elements, 0);
+                }
+                #[inline]
+                pub fn add_data(
+                    &mut self,
+                    data: flatbuffers::WIPOffset<flatbuffers::Vector<'b, u8>>,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<flatbuffers::WIPOffset<_>>(MeshStream::VT_DATA, data);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+                ) -> MeshStreamBuilder<'a, 'b> {
+                    let start = _fbb.start_table();
+                    MeshStreamBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> flatbuffers::WIPOffset<MeshStream<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    flatbuffers::WIPOffset::new(o.value())
+                }
+            }
+
+            pub enum MeshMaterialOffset {}
+            #[derive(Copy, Clone, Debug, PartialEq)]
+
+            pub struct MeshMaterial<'a> {
+                pub _tab: flatbuffers::Table<'a>,
+            }
+
+            impl<'a> flatbuffers::Follow<'a> for MeshMaterial<'a> {
+                type Inner = MeshMaterial<'a>;
+                #[inline]
+                fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: flatbuffers::Table { buf: buf, loc: loc },
+                    }
+                }
+            }
+
+            impl<'a> MeshMaterial<'a> {
+                #[inline]
+                pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+                    MeshMaterial { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+                    _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+                    args: &'args MeshMaterialArgs<'args>,
+                ) -> flatbuffers::WIPOffset<MeshMaterial<'bldr>> {
+                    let mut builder = MeshMaterialBuilder::new(_fbb);
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.finish()
+                }
+
+                pub const VT_NAME: flatbuffers::VOffsetT = 4;
+
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    self._tab
+                        .get::<flatbuffers::ForwardsUOffset<&str>>(MeshMaterial::VT_NAME, None)
+                }
+            }
+
+            pub struct MeshMaterialArgs<'a> {
+                pub name: Option<flatbuffers::WIPOffset<&'a str>>,
+            }
+            impl<'a> Default for MeshMaterialArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    MeshMaterialArgs { name: None }
+                }
+            }
+            pub struct MeshMaterialBuilder<'a: 'b, 'b> {
+                fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+                start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b> MeshMaterialBuilder<'a, 'b> {
+                #[inline]
+                pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<flatbuffers::WIPOffset<_>>(MeshMaterial::VT_NAME, name);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+                ) -> MeshMaterialBuilder<'a, 'b> {
+                    let start = _fbb.start_table();
+                    MeshMaterialBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> flatbuffers::WIPOffset<MeshMaterial<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    flatbuffers::WIPOffset::new(o.value())
+                }
+            }
+
+            pub enum MeshPartOffset {}
+            #[derive(Copy, Clone, Debug, PartialEq)]
+
+            pub struct MeshPart<'a> {
+                pub _tab: flatbuffers::Table<'a>,
+            }
+
+            impl<'a> flatbuffers::Follow<'a> for MeshPart<'a> {
+                type Inner = MeshPart<'a>;
+                #[inline]
+                fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: flatbuffers::Table { buf: buf, loc: loc },
+                    }
+                }
+            }
+
+            impl<'a> MeshPart<'a> {
+                #[inline]
+                pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+                    MeshPart { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+                    _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+                    args: &'args MeshPartArgs<'args>,
+                ) -> flatbuffers::WIPOffset<MeshPart<'bldr>> {
+                    let mut builder = MeshPartBuilder::new(_fbb);
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.add_node_index(args.node_index);
+                    builder.add_material_index(args.material_index);
+                    builder.add_index_count(args.index_count);
+                    builder.add_index_start(args.index_start);
+                    builder.add_animation_type(args.animation_type);
+                    builder.finish()
+                }
+
+                pub const VT_INDEX_START: flatbuffers::VOffsetT = 4;
+                pub const VT_INDEX_COUNT: flatbuffers::VOffsetT = 6;
+                pub const VT_MATERIAL_INDEX: flatbuffers::VOffsetT = 8;
+                pub const VT_NODE_INDEX: flatbuffers::VOffsetT = 10;
+                pub const VT_NAME: flatbuffers::VOffsetT = 12;
+                pub const VT_ANIMATION_TYPE: flatbuffers::VOffsetT = 14;
+
+                #[inline]
+                pub fn index_start(&self) -> u32 {
+                    self._tab
+                        .get::<u32>(MeshPart::VT_INDEX_START, Some(0))
+                        .unwrap()
+                }
+                #[inline]
+                pub fn index_count(&self) -> u32 {
+                    self._tab
+                        .get::<u32>(MeshPart::VT_INDEX_COUNT, Some(0))
+                        .unwrap()
+                }
+                #[inline]
+                pub fn material_index(&self) -> i32 {
+                    self._tab
+                        .get::<i32>(MeshPart::VT_MATERIAL_INDEX, Some(0))
+                        .unwrap()
+                }
+                #[inline]
+                pub fn node_index(&self) -> i32 {
+                    self._tab
+                        .get::<i32>(MeshPart::VT_NODE_INDEX, Some(0))
+                        .unwrap()
+                }
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    self._tab
+                        .get::<flatbuffers::ForwardsUOffset<&str>>(MeshPart::VT_NAME, None)
+                }
+                #[inline]
+                pub fn animation_type(&self) -> AnimationType {
+                    self._tab
+                        .get::<AnimationType>(
+                            MeshPart::VT_ANIMATION_TYPE,
+                            Some(AnimationType::None),
+                        )
+                        .unwrap()
+                }
+            }
+
+            pub struct MeshPartArgs<'a> {
+                pub index_start: u32,
+                pub index_count: u32,
+                pub material_index: i32,
+                pub node_index: i32,
+                pub name: Option<flatbuffers::WIPOffset<&'a str>>,
+                pub animation_type: AnimationType,
+            }
+            impl<'a> Default for MeshPartArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    MeshPartArgs {
+                        index_start: 0,
+                        index_count: 0,
+                        material_index: 0,
+                        node_index: 0,
+                        name: None,
+                        animation_type: AnimationType::None,
+                    }
+                }
+            }
+            pub struct MeshPartBuilder<'a: 'b, 'b> {
+                fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+                start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b> MeshPartBuilder<'a, 'b> {
+                #[inline]
+                pub fn add_index_start(&mut self, index_start: u32) {
+                    self.fbb_
+                        .push_slot::<u32>(MeshPart::VT_INDEX_START, index_start, 0);
+                }
+                #[inline]
+                pub fn add_index_count(&mut self, index_count: u32) {
+                    self.fbb_
+                        .push_slot::<u32>(MeshPart::VT_INDEX_COUNT, index_count, 0);
+                }
+                #[inline]
+                pub fn add_material_index(&mut self, material_index: i32) {
+                    self.fbb_
+                        .push_slot::<i32>(MeshPart::VT_MATERIAL_INDEX, material_index, 0);
+                }
+                #[inline]
+                pub fn add_node_index(&mut self, node_index: i32) {
+                    self.fbb_
+                        .push_slot::<i32>(MeshPart::VT_NODE_INDEX, node_index, 0);
+                }
+                #[inline]
+                pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<flatbuffers::WIPOffset<_>>(MeshPart::VT_NAME, name);
+                }
+                #[inline]
+                pub fn add_animation_type(&mut self, animation_type: AnimationType) {
+                    self.fbb_.push_slot::<AnimationType>(
+                        MeshPart::VT_ANIMATION_TYPE,
+                        animation_type,
+                        AnimationType::None,
+                    );
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+                ) -> MeshPartBuilder<'a, 'b> {
+                    let start = _fbb.start_table();
+                    MeshPartBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> flatbuffers::WIPOffset<MeshPart<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    flatbuffers::WIPOffset::new(o.value())
+                }
+            }
+
+            pub enum MeshOffset {}
+            #[derive(Copy, Clone, Debug, PartialEq)]
+
+            pub struct Mesh<'a> {
+                pub _tab: flatbuffers::Table<'a>,
+            }
+
+            impl<'a> flatbuffers::Follow<'a> for Mesh<'a> {
+                type Inner = Mesh<'a>;
+                #[inline]
+                fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: flatbuffers::Table { buf: buf, loc: loc },
+                    }
+                }
+            }
+
+            impl<'a> Mesh<'a> {
+                #[inline]
+                pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+                    Mesh { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+                    _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+                    args: &'args MeshArgs<'args>,
+                ) -> flatbuffers::WIPOffset<Mesh<'bldr>> {
+                    let mut builder = MeshBuilder::new(_fbb);
+                    if let Some(x) = args.streams {
+                        builder.add_streams(x);
+                    }
+                    if let Some(x) = args.materials {
+                        builder.add_materials(x);
+                    }
+                    if let Some(x) = args.parts {
+                        builder.add_parts(x);
+                    }
+                    if let Some(x) = args.identity {
+                        builder.add_identity(x);
+                    }
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.finish()
+                }
+
+                pub const VT_NAME: flatbuffers::VOffsetT = 4;
+                pub const VT_IDENTITY: flatbuffers::VOffsetT = 6;
+                pub const VT_PARTS: flatbuffers::VOffsetT = 8;
+                pub const VT_MATERIALS: flatbuffers::VOffsetT = 10;
+                pub const VT_STREAMS: flatbuffers::VOffsetT = 12;
+
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    self._tab
+                        .get::<flatbuffers::ForwardsUOffset<&str>>(Mesh::VT_NAME, None)
+                }
+                #[inline]
+                pub fn identity(&self) -> Option<&'a str> {
+                    self._tab
+                        .get::<flatbuffers::ForwardsUOffset<&str>>(Mesh::VT_IDENTITY, None)
+                }
+                #[inline]
+                pub fn parts(
+                    &self,
+                ) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshPart<'a>>>>
+                {
+                    self._tab.get::<flatbuffers::ForwardsUOffset<
+                        flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshPart<'a>>>,
+                    >>(Mesh::VT_PARTS, None)
+                }
+                #[inline]
+                pub fn materials(
+                    &self,
+                ) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshMaterial<'a>>>>
+                {
+                    self._tab.get::<flatbuffers::ForwardsUOffset<
+                        flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshMaterial<'a>>>,
+                    >>(Mesh::VT_MATERIALS, None)
+                }
+                #[inline]
+                pub fn streams(
+                    &self,
+                ) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshStream<'a>>>>
+                {
+                    self._tab.get::<flatbuffers::ForwardsUOffset<
+                        flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshStream<'a>>>,
+                    >>(Mesh::VT_STREAMS, None)
+                }
+            }
+
+            pub struct MeshArgs<'a> {
+                pub name: Option<flatbuffers::WIPOffset<&'a str>>,
+                pub identity: Option<flatbuffers::WIPOffset<&'a str>>,
+                pub parts: Option<
+                    flatbuffers::WIPOffset<
+                        flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<MeshPart<'a>>>,
+                    >,
+                >,
+                pub materials: Option<
+                    flatbuffers::WIPOffset<
+                        flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<MeshMaterial<'a>>>,
+                    >,
+                >,
+                pub streams: Option<
+                    flatbuffers::WIPOffset<
+                        flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<MeshStream<'a>>>,
+                    >,
+                >,
+            }
+            impl<'a> Default for MeshArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    MeshArgs {
+                        name: None,
+                        identity: None,
+                        parts: None,
+                        materials: None,
+                        streams: None,
+                    }
+                }
+            }
+            pub struct MeshBuilder<'a: 'b, 'b> {
+                fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+                start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b> MeshBuilder<'a, 'b> {
+                #[inline]
+                pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_NAME, name);
+                }
+                #[inline]
+                pub fn add_identity(&mut self, identity: flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_IDENTITY, identity);
+                }
+                #[inline]
+                pub fn add_parts(
+                    &mut self,
+                    parts: flatbuffers::WIPOffset<
+                        flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<MeshPart<'b>>>,
+                    >,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_PARTS, parts);
+                }
+                #[inline]
+                pub fn add_materials(
+                    &mut self,
+                    materials: flatbuffers::WIPOffset<
+                        flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<MeshMaterial<'b>>>,
+                    >,
+                ) {
+                    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+                        Mesh::VT_MATERIALS,
+                        materials,
+                    );
+                }
+                #[inline]
+                pub fn add_streams(
+                    &mut self,
+                    streams: flatbuffers::WIPOffset<
+                        flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<MeshStream<'b>>>,
+                    >,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_STREAMS, streams);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+                ) -> MeshBuilder<'a, 'b> {
+                    let start = _fbb.start_table();
+                    MeshBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> flatbuffers::WIPOffset<Mesh<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    flatbuffers::WIPOffset::new(o.value())
+                }
+            }
+
+            pub enum ManifestOffset {}
+            #[derive(Copy, Clone, Debug, PartialEq)]
+
+            pub struct Manifest<'a> {
+                pub _tab: flatbuffers::Table<'a>,
+            }
+
+            impl<'a> flatbuffers::Follow<'a> for Manifest<'a> {
+                type Inner = Manifest<'a>;
+                #[inline]
+                fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: flatbuffers::Table { buf: buf, loc: loc },
+                    }
+                }
+            }
+
+            impl<'a> Manifest<'a> {
+                #[inline]
+                pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+                    Manifest { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+                    _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+                    args: &'args ManifestArgs<'args>,
+                ) -> flatbuffers::WIPOffset<Manifest<'bldr>> {
+                    let mut builder = ManifestBuilder::new(_fbb);
+                    if let Some(x) = args.meshes {
+                        builder.add_meshes(x);
+                    }
+                    builder.finish()
+                }
+
+                pub const VT_MESHES: flatbuffers::VOffsetT = 4;
+
+                #[inline]
+                pub fn meshes(
+                    &self,
+                ) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Mesh<'a>>>>
+                {
+                    self._tab.get::<flatbuffers::ForwardsUOffset<
+                        flatbuffers::Vector<flatbuffers::ForwardsUOffset<Mesh<'a>>>,
+                    >>(Manifest::VT_MESHES, None)
+                }
+            }
+
+            pub struct ManifestArgs<'a> {
+                pub meshes: Option<
+                    flatbuffers::WIPOffset<
+                        flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<Mesh<'a>>>,
+                    >,
+                >,
+            }
+            impl<'a> Default for ManifestArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    ManifestArgs { meshes: None }
+                }
+            }
+            pub struct ManifestBuilder<'a: 'b, 'b> {
+                fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+                start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b> ManifestBuilder<'a, 'b> {
+                #[inline]
+                pub fn add_meshes(
+                    &mut self,
+                    meshes: flatbuffers::WIPOffset<
+                        flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<Mesh<'b>>>,
+                    >,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<flatbuffers::WIPOffset<_>>(Manifest::VT_MESHES, meshes);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+                ) -> ManifestBuilder<'a, 'b> {
+                    let start = _fbb.start_table();
+                    ManifestBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> flatbuffers::WIPOffset<Manifest<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    flatbuffers::WIPOffset::new(o.value())
+                }
+            }
+
+            #[inline]
+            pub fn get_root_as_manifest<'a>(buf: &'a [u8]) -> Manifest<'a> {
+                flatbuffers::get_root::<Manifest<'a>>(buf)
+            }
+
+            #[inline]
+            pub fn get_size_prefixed_root_as_manifest<'a>(buf: &'a [u8]) -> Manifest<'a> {
+                flatbuffers::get_size_prefixed_root::<Manifest<'a>>(buf)
+            }
+
+            #[inline]
+            pub fn finish_manifest_buffer<'a, 'b>(
+                fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+                root: flatbuffers::WIPOffset<Manifest<'a>>,
+            ) {
+                fbb.finish(root, None);
+            }
+
+            #[inline]
+            pub fn finish_size_prefixed_manifest_buffer<'a, 'b>(
+                fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+                root: flatbuffers::WIPOffset<Manifest<'a>>,
+            ) {
+                fbb.finish_size_prefixed(root, None);
+            }
+        } // pub mod schema
+    } // pub mod mesh
+} // pub mod service
