@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
 use crate::Matrix4;
-use crate::Vector2;
-use crate::Vector3;
-use crate::Vector4;
+//use crate::Vector2;
+//use crate::Vector3;
+//use crate::Vector4;
 
 #[derive(Debug, Clone)]
 pub enum AlphaMode {
@@ -33,11 +33,11 @@ pub struct SkinningData {
 pub struct MeshData {
     pub skinning_data: Vec<SkinningData>,
     pub positions: Vec<[f32; 3]>,
-    pub tex_coords: Vec<Vector2>,
-    pub normals: Vec<Vector3>,
-    pub tangents: Vec<Vector3>,
-    pub bitangents: Vec<Vector3>,
-    pub colors: Vec<Vector4>,
+    pub tex_coords: Vec<[f32; 2]>,
+    pub normals: Vec<[f32; 3]>,
+    pub tangents: Vec<[f32; 3]>,
+    pub bitangents: Vec<[f32; 3]>,
+    pub colors: Vec<[f32; 4]>,
     pub indices: Vec<u32>,
 }
 

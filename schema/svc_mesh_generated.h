@@ -10,6 +10,8 @@ namespace service {
 namespace mesh {
 namespace schema {
 
+struct Animation;
+
 struct MeshStream;
 
 struct MeshMaterial;
@@ -140,6 +142,34 @@ inline const char *EnumNameAnimationType(AnimationType e) {
   return EnumNamesAnimationType()[index];
 }
 
+struct Animation FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct AnimationBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  explicit AnimationBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  AnimationBuilder &operator=(const AnimationBuilder &);
+  flatbuffers::Offset<Animation> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<Animation>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<Animation> CreateAnimation(
+    flatbuffers::FlatBufferBuilder &_fbb) {
+  AnimationBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
 struct MeshStream FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_TYPE = 4,
@@ -227,15 +257,32 @@ inline flatbuffers::Offset<MeshStream> CreateMeshStreamDirect(
 
 struct MeshMaterial FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
-    VT_NAME = 4
+    VT_NAME = 4,
+    VT_MATERIAL = 6,
+    VT_ALBEDO_TINT = 8,
+    VT_ROUGHNESS = 10
   };
   const flatbuffers::String *name() const {
     return GetPointer<const flatbuffers::String *>(VT_NAME);
+  }
+  const flatbuffers::String *material() const {
+    return GetPointer<const flatbuffers::String *>(VT_MATERIAL);
+  }
+  const flatbuffers::Vector<float> *albedo_tint() const {
+    return GetPointer<const flatbuffers::Vector<float> *>(VT_ALBEDO_TINT);
+  }
+  float roughness() const {
+    return GetField<float>(VT_ROUGHNESS, 0.0f);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_NAME) &&
            verifier.VerifyString(name()) &&
+           VerifyOffset(verifier, VT_MATERIAL) &&
+           verifier.VerifyString(material()) &&
+           VerifyOffset(verifier, VT_ALBEDO_TINT) &&
+           verifier.VerifyVector(albedo_tint()) &&
+           VerifyField<float>(verifier, VT_ROUGHNESS) &&
            verifier.EndTable();
   }
 };
@@ -245,6 +292,15 @@ struct MeshMaterialBuilder {
   flatbuffers::uoffset_t start_;
   void add_name(flatbuffers::Offset<flatbuffers::String> name) {
     fbb_.AddOffset(MeshMaterial::VT_NAME, name);
+  }
+  void add_material(flatbuffers::Offset<flatbuffers::String> material) {
+    fbb_.AddOffset(MeshMaterial::VT_MATERIAL, material);
+  }
+  void add_albedo_tint(flatbuffers::Offset<flatbuffers::Vector<float>> albedo_tint) {
+    fbb_.AddOffset(MeshMaterial::VT_ALBEDO_TINT, albedo_tint);
+  }
+  void add_roughness(float roughness) {
+    fbb_.AddElement<float>(MeshMaterial::VT_ROUGHNESS, roughness, 0.0f);
   }
   explicit MeshMaterialBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -260,18 +316,30 @@ struct MeshMaterialBuilder {
 
 inline flatbuffers::Offset<MeshMaterial> CreateMeshMaterial(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> name = 0) {
+    flatbuffers::Offset<flatbuffers::String> name = 0,
+    flatbuffers::Offset<flatbuffers::String> material = 0,
+    flatbuffers::Offset<flatbuffers::Vector<float>> albedo_tint = 0,
+    float roughness = 0.0f) {
   MeshMaterialBuilder builder_(_fbb);
+  builder_.add_roughness(roughness);
+  builder_.add_albedo_tint(albedo_tint);
+  builder_.add_material(material);
   builder_.add_name(name);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<MeshMaterial> CreateMeshMaterialDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const char *name = nullptr) {
+    const char *name = nullptr,
+    const char *material = nullptr,
+    const std::vector<float> *albedo_tint = nullptr,
+    float roughness = 0.0f) {
   return service::mesh::schema::CreateMeshMaterial(
       _fbb,
-      name ? _fbb.CreateString(name) : 0);
+      name ? _fbb.CreateString(name) : 0,
+      material ? _fbb.CreateString(material) : 0,
+      albedo_tint ? _fbb.CreateVector<float>(*albedo_tint) : 0,
+      roughness);
 }
 
 struct MeshPart FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -280,8 +348,9 @@ struct MeshPart FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_INDEX_COUNT = 6,
     VT_MATERIAL_INDEX = 8,
     VT_NODE_INDEX = 10,
-    VT_NAME = 12,
-    VT_ANIMATION_TYPE = 14
+    VT_BASE_TRANSFORM = 12,
+    VT_NAME = 14,
+    VT_ANIMATION_TYPE = 16
   };
   uint32_t index_start() const {
     return GetField<uint32_t>(VT_INDEX_START, 0);
@@ -295,6 +364,9 @@ struct MeshPart FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   int32_t node_index() const {
     return GetField<int32_t>(VT_NODE_INDEX, 0);
   }
+  const flatbuffers::Vector<float> *base_transform() const {
+    return GetPointer<const flatbuffers::Vector<float> *>(VT_BASE_TRANSFORM);
+  }
   const flatbuffers::String *name() const {
     return GetPointer<const flatbuffers::String *>(VT_NAME);
   }
@@ -307,6 +379,8 @@ struct MeshPart FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<uint32_t>(verifier, VT_INDEX_COUNT) &&
            VerifyField<int32_t>(verifier, VT_MATERIAL_INDEX) &&
            VerifyField<int32_t>(verifier, VT_NODE_INDEX) &&
+           VerifyOffset(verifier, VT_BASE_TRANSFORM) &&
+           verifier.VerifyVector(base_transform()) &&
            VerifyOffset(verifier, VT_NAME) &&
            verifier.VerifyString(name()) &&
            VerifyField<int8_t>(verifier, VT_ANIMATION_TYPE) &&
@@ -328,6 +402,9 @@ struct MeshPartBuilder {
   }
   void add_node_index(int32_t node_index) {
     fbb_.AddElement<int32_t>(MeshPart::VT_NODE_INDEX, node_index, 0);
+  }
+  void add_base_transform(flatbuffers::Offset<flatbuffers::Vector<float>> base_transform) {
+    fbb_.AddOffset(MeshPart::VT_BASE_TRANSFORM, base_transform);
   }
   void add_name(flatbuffers::Offset<flatbuffers::String> name) {
     fbb_.AddOffset(MeshPart::VT_NAME, name);
@@ -353,10 +430,12 @@ inline flatbuffers::Offset<MeshPart> CreateMeshPart(
     uint32_t index_count = 0,
     int32_t material_index = 0,
     int32_t node_index = 0,
+    flatbuffers::Offset<flatbuffers::Vector<float>> base_transform = 0,
     flatbuffers::Offset<flatbuffers::String> name = 0,
     AnimationType animation_type = AnimationType_None) {
   MeshPartBuilder builder_(_fbb);
   builder_.add_name(name);
+  builder_.add_base_transform(base_transform);
   builder_.add_node_index(node_index);
   builder_.add_material_index(material_index);
   builder_.add_index_count(index_count);
@@ -371,6 +450,7 @@ inline flatbuffers::Offset<MeshPart> CreateMeshPartDirect(
     uint32_t index_count = 0,
     int32_t material_index = 0,
     int32_t node_index = 0,
+    const std::vector<float> *base_transform = nullptr,
     const char *name = nullptr,
     AnimationType animation_type = AnimationType_None) {
   return service::mesh::schema::CreateMeshPart(
@@ -379,6 +459,7 @@ inline flatbuffers::Offset<MeshPart> CreateMeshPartDirect(
       index_count,
       material_index,
       node_index,
+      base_transform ? _fbb.CreateVector<float>(*base_transform) : 0,
       name ? _fbb.CreateString(name) : 0,
       animation_type);
 }
@@ -389,7 +470,11 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_IDENTITY = 6,
     VT_PARTS = 8,
     VT_MATERIALS = 10,
-    VT_STREAMS = 12
+    VT_STREAMS = 12,
+    VT_SKINNING_DATA = 14,
+    VT_ANIMATIONS = 16,
+    VT_BOUNDING_MIN = 18,
+    VT_BOUNDING_MAX = 20
   };
   const flatbuffers::String *name() const {
     return GetPointer<const flatbuffers::String *>(VT_NAME);
@@ -406,6 +491,18 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<flatbuffers::Offset<MeshStream>> *streams() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<MeshStream>> *>(VT_STREAMS);
   }
+  const flatbuffers::Vector<uint8_t> *skinning_data() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_SKINNING_DATA);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<Animation>> *animations() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<Animation>> *>(VT_ANIMATIONS);
+  }
+  const flatbuffers::Vector<float> *bounding_min() const {
+    return GetPointer<const flatbuffers::Vector<float> *>(VT_BOUNDING_MIN);
+  }
+  const flatbuffers::Vector<float> *bounding_max() const {
+    return GetPointer<const flatbuffers::Vector<float> *>(VT_BOUNDING_MAX);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_NAME) &&
@@ -421,6 +518,15 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_STREAMS) &&
            verifier.VerifyVector(streams()) &&
            verifier.VerifyVectorOfTables(streams()) &&
+           VerifyOffset(verifier, VT_SKINNING_DATA) &&
+           verifier.VerifyVector(skinning_data()) &&
+           VerifyOffset(verifier, VT_ANIMATIONS) &&
+           verifier.VerifyVector(animations()) &&
+           verifier.VerifyVectorOfTables(animations()) &&
+           VerifyOffset(verifier, VT_BOUNDING_MIN) &&
+           verifier.VerifyVector(bounding_min()) &&
+           VerifyOffset(verifier, VT_BOUNDING_MAX) &&
+           verifier.VerifyVector(bounding_max()) &&
            verifier.EndTable();
   }
 };
@@ -443,6 +549,18 @@ struct MeshBuilder {
   void add_streams(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<MeshStream>>> streams) {
     fbb_.AddOffset(Mesh::VT_STREAMS, streams);
   }
+  void add_skinning_data(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> skinning_data) {
+    fbb_.AddOffset(Mesh::VT_SKINNING_DATA, skinning_data);
+  }
+  void add_animations(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Animation>>> animations) {
+    fbb_.AddOffset(Mesh::VT_ANIMATIONS, animations);
+  }
+  void add_bounding_min(flatbuffers::Offset<flatbuffers::Vector<float>> bounding_min) {
+    fbb_.AddOffset(Mesh::VT_BOUNDING_MIN, bounding_min);
+  }
+  void add_bounding_max(flatbuffers::Offset<flatbuffers::Vector<float>> bounding_max) {
+    fbb_.AddOffset(Mesh::VT_BOUNDING_MAX, bounding_max);
+  }
   explicit MeshBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -461,8 +579,16 @@ inline flatbuffers::Offset<Mesh> CreateMesh(
     flatbuffers::Offset<flatbuffers::String> identity = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<MeshPart>>> parts = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<MeshMaterial>>> materials = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<MeshStream>>> streams = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<MeshStream>>> streams = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> skinning_data = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Animation>>> animations = 0,
+    flatbuffers::Offset<flatbuffers::Vector<float>> bounding_min = 0,
+    flatbuffers::Offset<flatbuffers::Vector<float>> bounding_max = 0) {
   MeshBuilder builder_(_fbb);
+  builder_.add_bounding_max(bounding_max);
+  builder_.add_bounding_min(bounding_min);
+  builder_.add_animations(animations);
+  builder_.add_skinning_data(skinning_data);
   builder_.add_streams(streams);
   builder_.add_materials(materials);
   builder_.add_parts(parts);
@@ -477,14 +603,22 @@ inline flatbuffers::Offset<Mesh> CreateMeshDirect(
     const char *identity = nullptr,
     const std::vector<flatbuffers::Offset<MeshPart>> *parts = nullptr,
     const std::vector<flatbuffers::Offset<MeshMaterial>> *materials = nullptr,
-    const std::vector<flatbuffers::Offset<MeshStream>> *streams = nullptr) {
+    const std::vector<flatbuffers::Offset<MeshStream>> *streams = nullptr,
+    const std::vector<uint8_t> *skinning_data = nullptr,
+    const std::vector<flatbuffers::Offset<Animation>> *animations = nullptr,
+    const std::vector<float> *bounding_min = nullptr,
+    const std::vector<float> *bounding_max = nullptr) {
   return service::mesh::schema::CreateMesh(
       _fbb,
       name ? _fbb.CreateString(name) : 0,
       identity ? _fbb.CreateString(identity) : 0,
       parts ? _fbb.CreateVector<flatbuffers::Offset<MeshPart>>(*parts) : 0,
       materials ? _fbb.CreateVector<flatbuffers::Offset<MeshMaterial>>(*materials) : 0,
-      streams ? _fbb.CreateVector<flatbuffers::Offset<MeshStream>>(*streams) : 0);
+      streams ? _fbb.CreateVector<flatbuffers::Offset<MeshStream>>(*streams) : 0,
+      skinning_data ? _fbb.CreateVector<uint8_t>(*skinning_data) : 0,
+      animations ? _fbb.CreateVector<flatbuffers::Offset<Animation>>(*animations) : 0,
+      bounding_min ? _fbb.CreateVector<float>(*bounding_min) : 0,
+      bounding_max ? _fbb.CreateVector<float>(*bounding_max) : 0);
 }
 
 struct Manifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

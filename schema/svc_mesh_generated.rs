@@ -246,6 +246,69 @@ pub fn enum_name_animation_type(e: AnimationType) -> &'static str {
   ENUM_NAMES_ANIMATION_TYPE[index]
 }
 
+pub enum AnimationOffset {}
+#[derive(Copy, Clone, Debug, PartialEq)]
+
+pub struct Animation<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for Animation<'a> {
+    type Inner = Animation<'a>;
+    #[inline]
+    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: flatbuffers::Table { buf: buf, loc: loc },
+        }
+    }
+}
+
+impl<'a> Animation<'a> {
+    #[inline]
+    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        Animation {
+            _tab: table,
+        }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+        _args: &'args AnimationArgs) -> flatbuffers::WIPOffset<Animation<'bldr>> {
+      let mut builder = AnimationBuilder::new(_fbb);
+      builder.finish()
+    }
+
+}
+
+pub struct AnimationArgs {
+}
+impl<'a> Default for AnimationArgs {
+    #[inline]
+    fn default() -> Self {
+        AnimationArgs {
+        }
+    }
+}
+pub struct AnimationBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> AnimationBuilder<'a, 'b> {
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> AnimationBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    AnimationBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<Animation<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
 pub enum MeshStreamOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -387,26 +450,50 @@ impl<'a> MeshMaterial<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args MeshMaterialArgs<'args>) -> flatbuffers::WIPOffset<MeshMaterial<'bldr>> {
       let mut builder = MeshMaterialBuilder::new(_fbb);
+      builder.add_roughness(args.roughness);
+      if let Some(x) = args.albedo_tint { builder.add_albedo_tint(x); }
+      if let Some(x) = args.material { builder.add_material(x); }
       if let Some(x) = args.name { builder.add_name(x); }
       builder.finish()
     }
 
     pub const VT_NAME: flatbuffers::VOffsetT = 4;
+    pub const VT_MATERIAL: flatbuffers::VOffsetT = 6;
+    pub const VT_ALBEDO_TINT: flatbuffers::VOffsetT = 8;
+    pub const VT_ROUGHNESS: flatbuffers::VOffsetT = 10;
 
   #[inline]
   pub fn name(&self) -> Option<&'a str> {
     self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(MeshMaterial::VT_NAME, None)
   }
+  #[inline]
+  pub fn material(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(MeshMaterial::VT_MATERIAL, None)
+  }
+  #[inline]
+  pub fn albedo_tint(&self) -> Option<flatbuffers::Vector<'a, f32>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, f32>>>(MeshMaterial::VT_ALBEDO_TINT, None)
+  }
+  #[inline]
+  pub fn roughness(&self) -> f32 {
+    self._tab.get::<f32>(MeshMaterial::VT_ROUGHNESS, Some(0.0)).unwrap()
+  }
 }
 
 pub struct MeshMaterialArgs<'a> {
     pub name: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub material: Option<flatbuffers::WIPOffset<&'a  str>>,
+    pub albedo_tint: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  f32>>>,
+    pub roughness: f32,
 }
 impl<'a> Default for MeshMaterialArgs<'a> {
     #[inline]
     fn default() -> Self {
         MeshMaterialArgs {
             name: None,
+            material: None,
+            albedo_tint: None,
+            roughness: 0.0,
         }
     }
 }
@@ -418,6 +505,18 @@ impl<'a: 'b, 'b> MeshMaterialBuilder<'a, 'b> {
   #[inline]
   pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(MeshMaterial::VT_NAME, name);
+  }
+  #[inline]
+  pub fn add_material(&mut self, material: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(MeshMaterial::VT_MATERIAL, material);
+  }
+  #[inline]
+  pub fn add_albedo_tint(&mut self, albedo_tint: flatbuffers::WIPOffset<flatbuffers::Vector<'b , f32>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(MeshMaterial::VT_ALBEDO_TINT, albedo_tint);
+  }
+  #[inline]
+  pub fn add_roughness(&mut self, roughness: f32) {
+    self.fbb_.push_slot::<f32>(MeshMaterial::VT_ROUGHNESS, roughness, 0.0);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> MeshMaterialBuilder<'a, 'b> {
@@ -464,6 +563,7 @@ impl<'a> MeshPart<'a> {
         args: &'args MeshPartArgs<'args>) -> flatbuffers::WIPOffset<MeshPart<'bldr>> {
       let mut builder = MeshPartBuilder::new(_fbb);
       if let Some(x) = args.name { builder.add_name(x); }
+      if let Some(x) = args.base_transform { builder.add_base_transform(x); }
       builder.add_node_index(args.node_index);
       builder.add_material_index(args.material_index);
       builder.add_index_count(args.index_count);
@@ -476,8 +576,9 @@ impl<'a> MeshPart<'a> {
     pub const VT_INDEX_COUNT: flatbuffers::VOffsetT = 6;
     pub const VT_MATERIAL_INDEX: flatbuffers::VOffsetT = 8;
     pub const VT_NODE_INDEX: flatbuffers::VOffsetT = 10;
-    pub const VT_NAME: flatbuffers::VOffsetT = 12;
-    pub const VT_ANIMATION_TYPE: flatbuffers::VOffsetT = 14;
+    pub const VT_BASE_TRANSFORM: flatbuffers::VOffsetT = 12;
+    pub const VT_NAME: flatbuffers::VOffsetT = 14;
+    pub const VT_ANIMATION_TYPE: flatbuffers::VOffsetT = 16;
 
   #[inline]
   pub fn index_start(&self) -> u32 {
@@ -496,6 +597,10 @@ impl<'a> MeshPart<'a> {
     self._tab.get::<i32>(MeshPart::VT_NODE_INDEX, Some(0)).unwrap()
   }
   #[inline]
+  pub fn base_transform(&self) -> Option<flatbuffers::Vector<'a, f32>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, f32>>>(MeshPart::VT_BASE_TRANSFORM, None)
+  }
+  #[inline]
   pub fn name(&self) -> Option<&'a str> {
     self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(MeshPart::VT_NAME, None)
   }
@@ -510,6 +615,7 @@ pub struct MeshPartArgs<'a> {
     pub index_count: u32,
     pub material_index: i32,
     pub node_index: i32,
+    pub base_transform: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  f32>>>,
     pub name: Option<flatbuffers::WIPOffset<&'a  str>>,
     pub animation_type: AnimationType,
 }
@@ -521,6 +627,7 @@ impl<'a> Default for MeshPartArgs<'a> {
             index_count: 0,
             material_index: 0,
             node_index: 0,
+            base_transform: None,
             name: None,
             animation_type: AnimationType::None,
         }
@@ -546,6 +653,10 @@ impl<'a: 'b, 'b> MeshPartBuilder<'a, 'b> {
   #[inline]
   pub fn add_node_index(&mut self, node_index: i32) {
     self.fbb_.push_slot::<i32>(MeshPart::VT_NODE_INDEX, node_index, 0);
+  }
+  #[inline]
+  pub fn add_base_transform(&mut self, base_transform: flatbuffers::WIPOffset<flatbuffers::Vector<'b , f32>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(MeshPart::VT_BASE_TRANSFORM, base_transform);
   }
   #[inline]
   pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b  str>) {
@@ -599,6 +710,10 @@ impl<'a> Mesh<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args MeshArgs<'args>) -> flatbuffers::WIPOffset<Mesh<'bldr>> {
       let mut builder = MeshBuilder::new(_fbb);
+      if let Some(x) = args.bounding_max { builder.add_bounding_max(x); }
+      if let Some(x) = args.bounding_min { builder.add_bounding_min(x); }
+      if let Some(x) = args.animations { builder.add_animations(x); }
+      if let Some(x) = args.skinning_data { builder.add_skinning_data(x); }
       if let Some(x) = args.streams { builder.add_streams(x); }
       if let Some(x) = args.materials { builder.add_materials(x); }
       if let Some(x) = args.parts { builder.add_parts(x); }
@@ -612,6 +727,10 @@ impl<'a> Mesh<'a> {
     pub const VT_PARTS: flatbuffers::VOffsetT = 8;
     pub const VT_MATERIALS: flatbuffers::VOffsetT = 10;
     pub const VT_STREAMS: flatbuffers::VOffsetT = 12;
+    pub const VT_SKINNING_DATA: flatbuffers::VOffsetT = 14;
+    pub const VT_ANIMATIONS: flatbuffers::VOffsetT = 16;
+    pub const VT_BOUNDING_MIN: flatbuffers::VOffsetT = 18;
+    pub const VT_BOUNDING_MAX: flatbuffers::VOffsetT = 20;
 
   #[inline]
   pub fn name(&self) -> Option<&'a str> {
@@ -633,6 +752,22 @@ impl<'a> Mesh<'a> {
   pub fn streams(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshStream<'a>>>> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<MeshStream<'a>>>>>(Mesh::VT_STREAMS, None)
   }
+  #[inline]
+  pub fn skinning_data(&self) -> Option<&'a [u8]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(Mesh::VT_SKINNING_DATA, None).map(|v| v.safe_slice())
+  }
+  #[inline]
+  pub fn animations(&self) -> Option<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Animation<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<Animation<'a>>>>>(Mesh::VT_ANIMATIONS, None)
+  }
+  #[inline]
+  pub fn bounding_min(&self) -> Option<flatbuffers::Vector<'a, f32>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, f32>>>(Mesh::VT_BOUNDING_MIN, None)
+  }
+  #[inline]
+  pub fn bounding_max(&self) -> Option<flatbuffers::Vector<'a, f32>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, f32>>>(Mesh::VT_BOUNDING_MAX, None)
+  }
 }
 
 pub struct MeshArgs<'a> {
@@ -641,6 +776,10 @@ pub struct MeshArgs<'a> {
     pub parts: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<MeshPart<'a >>>>>,
     pub materials: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<MeshMaterial<'a >>>>>,
     pub streams: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<MeshStream<'a >>>>>,
+    pub skinning_data: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  u8>>>,
+    pub animations: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<Animation<'a >>>>>,
+    pub bounding_min: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  f32>>>,
+    pub bounding_max: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  f32>>>,
 }
 impl<'a> Default for MeshArgs<'a> {
     #[inline]
@@ -651,6 +790,10 @@ impl<'a> Default for MeshArgs<'a> {
             parts: None,
             materials: None,
             streams: None,
+            skinning_data: None,
+            animations: None,
+            bounding_min: None,
+            bounding_max: None,
         }
     }
 }
@@ -678,6 +821,22 @@ impl<'a: 'b, 'b> MeshBuilder<'a, 'b> {
   #[inline]
   pub fn add_streams(&mut self, streams: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<MeshStream<'b >>>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_STREAMS, streams);
+  }
+  #[inline]
+  pub fn add_skinning_data(&mut self, skinning_data: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_SKINNING_DATA, skinning_data);
+  }
+  #[inline]
+  pub fn add_animations(&mut self, animations: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<Animation<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_ANIMATIONS, animations);
+  }
+  #[inline]
+  pub fn add_bounding_min(&mut self, bounding_min: flatbuffers::WIPOffset<flatbuffers::Vector<'b , f32>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_BOUNDING_MIN, bounding_min);
+  }
+  #[inline]
+  pub fn add_bounding_max(&mut self, bounding_max: flatbuffers::WIPOffset<flatbuffers::Vector<'b , f32>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Mesh::VT_BOUNDING_MAX, bounding_max);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> MeshBuilder<'a, 'b> {

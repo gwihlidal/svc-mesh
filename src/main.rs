@@ -256,30 +256,11 @@ fn load_model<'a>(
     for i in 0..model.vertex_buffer.len() {
         let vertex = &model.vertex_buffer[i];
         mesh_data.positions.push(vertex.position);
-        mesh_data
-            .tex_coords
-            .push(Vector2::new(vertex.uv0[0], vertex.uv0[1]));
-        mesh_data.normals.push(Vector3::new(
-            vertex.normal[0],
-            vertex.normal[1],
-            vertex.normal[2],
-        ));
-        mesh_data.tangents.push(Vector3::new(
-            vertex.tangent[0],
-            vertex.tangent[1],
-            vertex.tangent[2],
-        ));
-        mesh_data.bitangents.push(Vector3::new(
-            vertex.bitangent[0],
-            vertex.bitangent[1],
-            vertex.bitangent[2],
-        ));
-        mesh_data.colors.push(Vector4::new(
-            vertex.color0[0],
-            vertex.color0[1],
-            vertex.color0[2],
-            vertex.color0[3],
-        ));
+        mesh_data.tex_coords.push(vertex.uv0);
+        mesh_data.normals.push(vertex.normal);
+        mesh_data.tangents.push(vertex.tangent);
+        mesh_data.bitangents.push(vertex.bitangent);
+        mesh_data.colors.push(vertex.color0);
 
         if has_animations {
             // TODO
@@ -301,24 +282,128 @@ fn load_model<'a>(
         return Err(Error::memory("no vertices found"));
     }
 
-    // Calculate bounding box
-    let dimensions = (model.dimensions.min, model.dimensions.max);
-
     // Setup streams
-    // TODO
     let mut streams: Vec<_> = Vec::new();
 
     // Positions
+    let position_data = mesh_data.positions.as_ptr() as *const u8;
+    let position_data = unsafe {
+        std::slice::from_raw_parts(
+            position_data,
+            mesh_data.positions.len() * std::mem::size_of::<[f32; 3]>(),
+        )
+    };
+    let position_data = Some(builder.create_vector_direct(&position_data));
+    let position_stream = schema::MeshStream::create(
+        &mut builder,
+        &schema::MeshStreamArgs {
+            format: schema::StreamFormat::Vector3,
+            type_: schema::StreamType::Positions,
+            elements: mesh_data.positions.len() as u64,
+            data: position_data,
+        },
+    );
+    streams.push(position_stream);
 
     // Normals
+    let normal_data = mesh_data.normals.as_ptr() as *const u8;
+    let normal_data = unsafe {
+        std::slice::from_raw_parts(
+            normal_data,
+            mesh_data.normals.len() * std::mem::size_of::<[f32; 3]>(),
+        )
+    };
+    let normal_data = Some(builder.create_vector_direct(&normal_data));
+    let normal_stream = schema::MeshStream::create(
+        &mut builder,
+        &schema::MeshStreamArgs {
+            format: schema::StreamFormat::Vector3,
+            type_: schema::StreamType::Normals,
+            elements: mesh_data.normals.len() as u64,
+            data: normal_data,
+        },
+    );
+    streams.push(normal_stream);
 
     // Tangents
+    let tangent_data = mesh_data.tangents.as_ptr() as *const u8;
+    let tangent_data = unsafe {
+        std::slice::from_raw_parts(
+            tangent_data,
+            mesh_data.tangents.len() * std::mem::size_of::<[f32; 3]>(),
+        )
+    };
+    let tangent_data = Some(builder.create_vector_direct(&tangent_data));
+    let tangent_stream = schema::MeshStream::create(
+        &mut builder,
+        &schema::MeshStreamArgs {
+            format: schema::StreamFormat::Vector3,
+            type_: schema::StreamType::Tangents,
+            elements: mesh_data.tangents.len() as u64,
+            data: tangent_data,
+        },
+    );
+    streams.push(tangent_stream);
 
     // Bitangents
+    let bitangent_data = mesh_data.bitangents.as_ptr() as *const u8;
+    let bitangent_data = unsafe {
+        std::slice::from_raw_parts(
+            bitangent_data,
+            mesh_data.bitangents.len() * std::mem::size_of::<[f32; 3]>(),
+        )
+    };
+    let bitangent_data = Some(builder.create_vector_direct(&bitangent_data));
+    let bitangent_stream = schema::MeshStream::create(
+        &mut builder,
+        &schema::MeshStreamArgs {
+            format: schema::StreamFormat::Vector3,
+            type_: schema::StreamType::Bitangents,
+            elements: mesh_data.bitangents.len() as u64,
+            data: bitangent_data,
+        },
+    );
+    streams.push(bitangent_stream);
 
     // Texture Coords
+    let tex_coord_data = mesh_data.tex_coords.as_ptr() as *const u8;
+    let tex_coord_data = unsafe {
+        std::slice::from_raw_parts(
+            tex_coord_data,
+            mesh_data.tex_coords.len() * std::mem::size_of::<[f32; 2]>(),
+        )
+    };
+    let tex_coord_data = Some(builder.create_vector_direct(&tex_coord_data));
+    let tex_coord_stream = schema::MeshStream::create(
+        &mut builder,
+        &schema::MeshStreamArgs {
+            format: schema::StreamFormat::Vector2,
+            type_: schema::StreamType::TextureCoordinates,
+            elements: mesh_data.tex_coords.len() as u64,
+            data: tex_coord_data,
+        },
+    );
+    streams.push(tex_coord_stream);
 
     // Colors
+    let color_data = mesh_data.colors.as_ptr() as *const u8;
+    let color_data = unsafe {
+        std::slice::from_raw_parts(
+            color_data,
+            mesh_data.colors.len() * std::mem::size_of::<[f32; 4]>(),
+        )
+    };
+    let color_data = Some(builder.create_vector_direct(&color_data));
+    let color_stream = schema::MeshStream::create(
+        &mut builder,
+        &schema::MeshStreamArgs {
+            format: schema::StreamFormat::Vector4,
+            type_: schema::StreamType::Colors,
+            elements: mesh_data.colors.len() as u64,
+            data: color_data,
+        },
+    );
+    streams.push(color_stream);
 
     // Indices
     let index_data = mesh_data.indices.as_ptr() as *const u8;
@@ -343,16 +428,35 @@ fn load_model<'a>(
     let streams = Some(builder.create_vector(&streams));
 
     // Setup materials
-    // TODO
-    //let materials: Vec<_> = Vec::new();
-    //let materials = Some(builder.create_vector(&materials));
+    let mut materials: Vec<_> = Vec::new();
+    for material in &model.materials {
+        let name = if let Some(ref name) = material.name {
+            name.to_owned()
+        } else {
+            "".to_string()
+        };
+        let name = Some(builder.create_string(&name));
+        let uri = Some(builder.create_string(&material.material_uri));
+        let albedo_tint = Some(builder.create_vector_direct(&[material.base_color_factor[0], material.base_color_factor[1], material.base_color_factor[2]]));
+        materials.push(schema::MeshMaterial::create(
+            &mut builder,
+            &schema::MeshMaterialArgs {
+                name,
+                material: uri,
+                albedo_tint,
+                roughness: material.roughness_factor,
+            },
+        ));
+    }
+    let materials = Some(builder.create_vector(&materials));
 
-    // Serialize asset
-    // TODO
-    // let streams: Vec<schema::MeshStream> = Vec::new();
+    // Setup parts
     //let parts: Vec<_> = Vec::new();
     //let parts = Some(builder.create_vector(&parts));
 
+    // Calculate bounding box
+    let bounding_min = Some(builder.create_vector_direct(&[model.dimensions.min[0], model.dimensions.min[1], model.dimensions.min[2]]));
+    let bounding_max = Some(builder.create_vector_direct(&[model.dimensions.max[0], model.dimensions.max[1], model.dimensions.max[2]]));
     let name = Some(builder.create_string(&model_path.to_string_lossy()));
     let identity = "123456-ident";
     let identity = Some(builder.create_string(&identity));
@@ -362,10 +466,13 @@ fn load_model<'a>(
             name,
             identity,
             streams,
-            // materials,
+            materials,
+            animations: None,
             //parts,
-            materials: None,
             parts: None,
+            skinning_data: None,
+            bounding_min,
+            bounding_max,
         },
     );
 

@@ -26,6 +26,10 @@ enum AnimationType:byte {
     Skinned,
 }
 
+table Animation {
+
+}
+
 table MeshStream {
     type:StreamType;
     format:StreamFormat;
@@ -35,18 +39,9 @@ table MeshStream {
 
 table MeshMaterial {
     name:string;
-    //AssetUrl albedoTextureAsset;
-    //AssetUrl normalTextureAsset;
-    //AssetUrl roughnessTextureAsset;
-    //AssetUrl metalnessTextureAsset;
-    //AssetUrl aoTextureAsset;
-    //AssetUrl emissiveTextureAsset;
-
-    //Vector3 albedoTint;
-    //float32 roughness;
-    //Vector2 uvScrollingSpeed;
-
-    //AssetUrl materialUrl;
+    material:string;
+    albedo_tint:Vector3;
+    roughness:float32;
 }
 
 table MeshPart {
@@ -54,9 +49,15 @@ table MeshPart {
     index_count:uint32;
     material_index:int32;
     node_index:int32;
-    //base_transform:Matrix4;
+    base_transform:[float32];
     name:string;
     animation_type:AnimationType;
+}
+
+table Vector3 {
+    x:float32;
+    y:float32;
+    z:float32;
 }
 
 table Mesh {
@@ -65,11 +66,11 @@ table Mesh {
     parts:[MeshPart];
     materials:[MeshMaterial];
     streams:[MeshStream];
-    //AssetCasBlob vertexSkinningDataBlob;
+    skinning_data:[ubyte];
     //std::map<std::string, uint32> bones;
-    //std::vector<Animation> animations;
-    //Vector3 boundingBoxMin;
-    //Vector3 boundingBoxMax;
+    animations:[Animation];
+    bounding_min:Vector3;
+    bounding_max:Vector3;
 }
 
 table Manifest {
