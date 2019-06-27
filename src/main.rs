@@ -54,16 +54,8 @@ fn load_model<'a>(
     model_path: &Path,
 ) -> Result<flatbuffers::WIPOffset<schema::Mesh<'a>>> {
     let _base_path = model_path.parent().unwrap_or(Path::new("./"));
-    //let gltf_data = read_to_end(model_path)?;
-    //let (gltf, gltf_buffers) = import(&gltf_data, base_path)?;
-    //println!("gltf: {:?}", gltf);
 
     let (document, buffers, images) = gltf::import(model_path)?;
-
-    /* for gltf_materal in &document.materials {
-        let mat = Rc::new(GltfMaterial::from_gltf(&material_ref, model, data, path));
-        model.materials.push(Rc::clone(&mat));
-    }*/
 
     let options = GltfOptions {
         regenerate_tangents: true,
@@ -264,6 +256,48 @@ fn load_model<'a>(
 
         if has_animations {
             // TODO
+            let mut skinning_data = SkinningData {
+                bone_count: vertex.influence_count,
+                weights: [0.0; MAX_BONE_INFLUENCES],
+                bone_ids: [0; MAX_BONE_INFLUENCES],
+            };
+
+            let mut sum = 0.0;
+
+            // Largest index with a non zero weight
+            let mut max_non_zero = std::u32::MAX;
+
+            for bone in 0..skinning_data.bone_count {
+                if bone < 4 {
+                    skinning_data.weights[bone as usize] = vertex.weight0[bone as usize];
+                    skinning_data.bone_ids[bone as usize] = vertex.joint0[bone as usize] as u32;
+                } else if bone < 8 {
+                    skinning_data.weights[bone as usize] = vertex.weight1[bone as usize - 4];
+                    skinning_data.bone_ids[bone as usize] = vertex.joint1[bone as usize - 4] as u32;
+                } else if bone < 12 {
+                    skinning_data.weights[bone as usize] = vertex.weight2[bone as usize - 8];
+                    skinning_data.bone_ids[bone as usize] = vertex.joint2[bone as usize - 8] as u32;
+                } else {
+                    skinning_data.weights[bone as usize] = vertex.weight3[bone as usize - 12];
+                    skinning_data.bone_ids[bone as usize] =
+                        vertex.joint3[bone as usize - 12] as u32;
+                }
+
+                if skinning_data.weights[bone as usize] > 0.0 {
+                    max_non_zero = bone;
+                }
+
+                sum += skinning_data.weights[bone as usize];
+            }
+
+            skinning_data.bone_count = max_non_zero + 1;
+
+            // Re-balance the weights
+            for bone in 0..skinning_data.bone_count {
+                skinning_data.weights[bone as usize] /= sum;
+            }
+
+            mesh_data.skinning_data.push(skinning_data);
         }
     }
 
@@ -437,7 +471,11 @@ fn load_model<'a>(
         };
         let name = Some(builder.create_string(&name));
         let uri = Some(builder.create_string(&material.material_uri));
-        let albedo_tint = Some(builder.create_vector_direct(&[material.base_color_factor[0], material.base_color_factor[1], material.base_color_factor[2]]));
+        let albedo_tint = Some(builder.create_vector_direct(&[
+            material.base_color_factor[0],
+            material.base_color_factor[1],
+            material.base_color_factor[2],
+        ]));
         materials.push(schema::MeshMaterial::create(
             &mut builder,
             &schema::MeshMaterialArgs {
@@ -455,8 +493,16 @@ fn load_model<'a>(
     //let parts = Some(builder.create_vector(&parts));
 
     // Calculate bounding box
-    let bounding_min = Some(builder.create_vector_direct(&[model.dimensions.min[0], model.dimensions.min[1], model.dimensions.min[2]]));
-    let bounding_max = Some(builder.create_vector_direct(&[model.dimensions.max[0], model.dimensions.max[1], model.dimensions.max[2]]));
+    let bounding_min = Some(builder.create_vector_direct(&[
+        model.dimensions.min[0],
+        model.dimensions.min[1],
+        model.dimensions.min[2],
+    ]));
+    let bounding_max = Some(builder.create_vector_direct(&[
+        model.dimensions.max[0],
+        model.dimensions.max[1],
+        model.dimensions.max[2],
+    ]));
     let name = Some(builder.create_string(&model_path.to_string_lossy()));
     let identity = "123456-ident";
     let identity = Some(builder.create_string(&identity));
