@@ -359,8 +359,12 @@ impl GltfAnimation {
             }
         }
 
-        let node_to_channel = HashMap::new();
-        // TODO:
+        let mut node_to_channel = HashMap::new();
+
+        for (i, channel) in channels.iter().enumerate() {
+            // println!("Channel with node: {}",channel.node_ref.borrow().name.clone().unwrap());
+            node_to_channel.insert(channel.node_ref.borrow().node_index, i);
+        }
 
         Rc::new(GltfAnimation {
             index: animation_ref.index(),
