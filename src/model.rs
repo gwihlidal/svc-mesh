@@ -12,6 +12,7 @@ use crate::GltfSkin;
 use crate::GltfTexture;
 use crate::Result;
 use crate::Vector3;
+use std::collections::HashMap;
 use std::path::Path;
 use std::rc::Rc;
 
@@ -127,13 +128,36 @@ impl GltfModel {
         }
         model.linear_nodes.append(&mut res_nodes);
 
+        let mut taken_names = HashMap::new();
+
+        for node in model.linear_nodes.iter() {
+            // Assign node a name if it doesn't have one, use N_<node_index> as default
+            if node.borrow().name.is_none() {
+                let node_index = node.borrow().node_index;
+                node.borrow_mut().name = Some("N".to_string() + "_" + &node_index.to_string());
+            }
+
+            // Ensure all nodes have unique names
+            if taken_names.contains_key(&node.borrow().name.clone().unwrap()) {
+                let mut index = 0;
+                let mut new_name = node.borrow().name.clone().unwrap() + "_" + &index.to_string();
+
+                while taken_names.contains_key(&new_name) {
+                    index = index + 1;
+                    new_name = node.borrow().name.clone().unwrap() + "_" + &index.to_string();
+                }
+                node.borrow_mut().name = Some(new_name);
+            }
+            taken_names.insert(node.borrow().name.clone().unwrap(), node.borrow().name.clone().unwrap());
+        }
+
         // Print Nodes
         // for node in model.root_nodes.iter() {
         //     GltfModel::print_nodes(&node, "".to_string());
         // }
 
         // for node in model.linear_nodes.iter() {
-        //      println!("Node: Children {}",node.borrow().children.len());
+        //      println!("Node: {} Children {}",node.borrow().name.clone().unwrap(),node.borrow().children.len());
         // }
 
         // Load cameras
