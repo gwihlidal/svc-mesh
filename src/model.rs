@@ -148,7 +148,10 @@ impl GltfModel {
                 }
                 node.borrow_mut().name = Some(new_name);
             }
-            taken_names.insert(node.borrow().name.clone().unwrap(), node.borrow().name.clone().unwrap());
+            taken_names.insert(
+                node.borrow().name.clone().unwrap(),
+                node.borrow().name.clone().unwrap(),
+            );
         }
 
         // Print Nodes
