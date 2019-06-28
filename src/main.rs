@@ -265,36 +265,36 @@ fn load_model<'a>(
             let mut sum = 0.0;
 
             // Largest index with a non zero weight
-            let mut max_non_zero = std::u32::MAX;
+            let mut max_non_zero = std::usize::MAX;
 
-            for bone in 0..skinning_data.bone_count {
+            for bone in 0..skinning_data.bone_count as usize {
                 if bone < 4 {
-                    skinning_data.weights[bone as usize] = vertex.weight0[bone as usize];
-                    skinning_data.bone_ids[bone as usize] = vertex.joint0[bone as usize] as u32;
+                    skinning_data.weights[bone] = vertex.weight0[bone];
+                    skinning_data.bone_ids[bone] = vertex.joint0[bone] as u32;
                 } else if bone < 8 {
-                    skinning_data.weights[bone as usize] = vertex.weight1[bone as usize - 4];
-                    skinning_data.bone_ids[bone as usize] = vertex.joint1[bone as usize - 4] as u32;
+                    skinning_data.weights[bone] = vertex.weight1[bone - 4];
+                    skinning_data.bone_ids[bone] = vertex.joint1[bone - 4] as u32;
                 } else if bone < 12 {
-                    skinning_data.weights[bone as usize] = vertex.weight2[bone as usize - 8];
-                    skinning_data.bone_ids[bone as usize] = vertex.joint2[bone as usize - 8] as u32;
+                    skinning_data.weights[bone] = vertex.weight2[bone - 8];
+                    skinning_data.bone_ids[bone] = vertex.joint2[bone - 8] as u32;
                 } else {
-                    skinning_data.weights[bone as usize] = vertex.weight3[bone as usize - 12];
-                    skinning_data.bone_ids[bone as usize] =
-                        vertex.joint3[bone as usize - 12] as u32;
+                    skinning_data.weights[bone] = vertex.weight3[bone - 12];
+                    skinning_data.bone_ids[bone] =
+                        vertex.joint3[bone - 12] as u32;
                 }
 
-                if skinning_data.weights[bone as usize] > 0.0 {
+                if skinning_data.weights[bone] > 0.0 {
                     max_non_zero = bone;
                 }
 
-                sum += skinning_data.weights[bone as usize];
+                sum += skinning_data.weights[bone];
             }
 
-            skinning_data.bone_count = max_non_zero + 1;
+            skinning_data.bone_count = (max_non_zero + 1) as u32;
 
             // Re-balance the weights
-            for bone in 0..skinning_data.bone_count {
-                skinning_data.weights[bone as usize] /= sum;
+            for bone in 0..skinning_data.bone_count as usize {
+                skinning_data.weights[bone] /= sum;
             }
 
             mesh_data.skinning_data.push(skinning_data);
